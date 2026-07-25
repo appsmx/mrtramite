@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
 import { generarFolio } from './folio'
+import { logger } from '@/lib/logger'
 import type { ExpedienteEstado } from '@prisma/client'
 import type { WizardData } from '@/components/wizard/types'
 
@@ -162,7 +163,7 @@ export async function crearExpedienteDesdeWizard({ wizardData, adminUserId }: Cr
         },
       })
     } catch (emailError) {
-      console.error('Error enviando email de solicitud recibida:', emailError)
+      logger.error('Error enviando email de solicitud recibida', { error: emailError instanceof Error ? emailError.message : String(emailError) })
     }
   }
 
@@ -320,10 +321,10 @@ export async function ejecutarAccion({ folio, codigoAccion, ejecutadoPorId, meta
         })
       }
       if (!emailResult.success) {
-        console.warn(`Email no enviado para ${resultado._emailData.tipo}: ${emailResult.error}`)
+        logger.warn('Email no enviado', { tipo: resultado._emailData.tipo, error: emailResult.error })
       }
     } catch (emailError) {
-      console.error('Error enviando email:', emailError)
+      logger.error('Error enviando email', { error: emailError instanceof Error ? emailError.message : String(emailError) })
     }
   }
 

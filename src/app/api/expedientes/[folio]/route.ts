@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { obtenerExpedientePorFolio, ejecutarAccion } from '@/lib/services/expediente-service'
+import { logger } from '@/lib/logger'
 
 // ============================================================================
 // GET /api/expedientes/[folio]
@@ -97,7 +98,7 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error('Error obteniendo expediente:', error)
+    logger.error('Error obteniendo expediente', { folio, error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

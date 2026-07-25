@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { ejecutarAccion, getOrCreateSystemUser } from '@/lib/services/expediente-service'
+import { logger } from '@/lib/logger'
 
 // ============================================================================
 // POST /api/expedientes/[folio]/accion
@@ -85,7 +86,7 @@ export async function POST(
         : null,
     })
   } catch (error) {
-    console.error('Error ejecutando acción:', error)
+    logger.error('Error ejecutando acción', { folio, codigoAccion: body?.codigoAccion, error: error instanceof Error ? error.message : String(error) })
 
     // Errores de validación (precondiciones, transiciones inválidas)
     if (error instanceof Error) {

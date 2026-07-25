@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import type { NotificacionTipo } from '@prisma/client'
+import { logger } from '@/lib/logger'
 
 // ============================================================================
 // Servicio de emails con Resend
@@ -36,8 +37,7 @@ export interface EmailData {
 export async function enviarEmail(data: EmailData): Promise<{ success: boolean; id?: string; error?: string }> {
   // Si no hay API key (desarrollo), simular envío
   if (!resend) {
-    console.log(`📧 [EMAIL SIMULADO] ${data.tipo} → ${data.to}`)
-    console.log(`   Asunto: ${getAsunto(data.tipo, data.folio)}`)
+    logger.info('Email simulado (sin API key)', { tipo: data.tipo, to: data.to, asunto: getAsunto(data.tipo, data.folio) })
     return { success: true, id: 'simulated-' + Date.now() }
   }
 
@@ -53,13 +53,13 @@ export async function enviarEmail(data: EmailData): Promise<{ success: boolean; 
     })
 
     if (result.error) {
-      console.error('Error Resend:', result.error)
+      logger.error('Error Resend', { error: result.error.message })
       return { success: false, error: result.error.message }
     }
 
     return { success: true, id: result.data?.id }
   } catch (error) {
-    console.error('Error enviando email:', error)
+    logger.error('Error enviando email', { tipo: data.tipo, error: error instanceof Error ? error.message : String(error) })
     return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' }
   }
 }

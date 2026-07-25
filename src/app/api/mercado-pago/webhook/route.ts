@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { ejecutarAccion } from '@/lib/services/expediente-service'
+import { logger } from '@/lib/logger'
 
 // ============================================================================
 // POST /api/mercado-pago/webhook
@@ -10,7 +11,7 @@ import { ejecutarAccion } from '@/lib/services/expediente-service'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    console.log('Webhook Mercado Pago recibido:', JSON.stringify(body, null, 2))
+    logger.debug('Webhook Mercado Pago recibido', { body })
 
     // Mercado Pago envía notificaciones con type=data.id y data.id=ID del pago
     // En producción, aquí se consultaría la API de MP para verificar el pago.
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest) {
       body?.id
 
     if (!mercadoPagoId) {
+      logger.warn('Webhook MP sin ID de pago')
       return NextResponse.json(
         { error: 'Webhook sin ID de pago' },
         { status: 400 }
@@ -35,13 +37,13 @@ export async function POST(request: NextRequest) {
     })
 
     if (!pago) {
-      console.log('Pago no encontrado para mercadoPagoId:', mercadoPagoId)
+      logger.warn('Pago no encontrado para mercadoPagoId', { mercadoPagoId })
       // Responder 200 para que MP no reintente indefinidamente
       return NextResponse.json({ ok: true, message: 'Pago no encontrado, ignorado' })
     }
 
     if (pago.estado === 'PAGADO') {
-      // Ya fue procesado, no hacer nada
+      logger.info('Webhook MP: pago ya procesado', { pagoId: pago.id })
       return NextResponse.json({ ok: true, message: 'Pago ya procesado' })
     }
 
@@ -71,7 +73,11 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log(`ACC-005 ejecutada para ${pago.expediente.folio}: ${resultado.accion.descripcion}`)
+    logger.info('ACC-005 ejecutada vía webhook MP', {
+      folio: pago.expediente.folio,
+      accion: resultado.accion.descripcion,
+      nuevoEstado: resultado.expediente.estado,
+    })
 
     return NextResponse.json({
       ok: true,
@@ -79,7 +85,7 @@ export async function POST(request: NextRequest) {
       nuevoEstado: resultado.expediente.estado,
     })
   } catch (error) {
-    console.error('Error en webhook Mercado Pago:', error)
+    logger.error('Error en webhook Mercado Pago', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

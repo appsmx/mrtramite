@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { crearExpedienteDesdeWizard, listarExpedientes } from '@/lib/services/expediente-service'
+import { logger } from '@/lib/logger'
 import type { WizardData } from '@/components/wizard/types'
 import type { ExpedienteEstado } from '@prisma/client'
 
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
-    console.error('Error creando expediente:', error)
+    logger.error('Error creando expediente', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Error interno del servidor' },
       { status: 500 }
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
       total: resultado.total,
     })
   } catch (error) {
-    console.error('Error listando expedientes:', error)
+    logger.error('Error listando expedientes', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
