@@ -1,7 +1,7 @@
 # Biblia_MrTramite.md
 
-**Versión:** 0.1
-**Estado:** En construcción
+**Versión:** 0.2
+**Estado:** En revisión
 **Propósito:** Capturar el conocimiento específico del producto Mr. Trámite —visión, usuarios, reglas de negocio, decisiones aprobadas, MVP, stack tecnológica, identidad visual e implicaciones de privacidad. Autoridad del producto (Nivel Proyecto bajo `[LOGAN]`). Cualquier IA que se incorpore al proyecto debe leer este documento antes de producir resultados.
 **Fecha:** 2026-07-25
 
@@ -141,6 +141,24 @@ Esto exige un **CRM unificado** que registre a todo cliente desde el primer cont
 - **Consecuencias:** Se debe producir versión actualizada del logo (varias resoluciones: favicon, avatar de app, header web, versión horizontal, versión monocromática). Detalle en Sección 9.
 - **Fecha:** 2026-07-25
 
+### DEC-007: Pasarela de pago inicial — Mercado Pago
+
+- **Problema:** Definir la pasarela de pago para el MVP, considerando que el cliente paga únicamente después de tener la cita confirmada.
+- **Alternativas:** (a) Mercado Pago, (b) Stripe, (c) Ambas desde el inicio.
+- **Decisión:** Mercado Pago como pasarela inicial del MVP.
+- **Justificación:** Mejor adopción en México (Mercado Pago es estándar de facto), permite pago con tarjeta y transferencia SPEI desde una sola integración, sin mensualidad (solo comisión por transacción 3.49% + IVA). Stripe queda como backlog para clientes internacionales o fase 2.
+- **Consecuencias:** Integración con Mercado Pago SDK + Webhooks para confirmar pagos automáticamente. Stripe queda fuera del MVP (backlog). El cliente puede pagar por link generado desde el panel admin cuando la cita está confirmada.
+- **Fecha:** 2026-07-25
+
+### DEC-008: Color de la corbata — azul petróleo
+
+- **Problema:** Definir el color de la corbata que se añadirá al logo (pendiente por DEC-006).
+- **Alternativas:** (a) Azul petróleo `#1B4F72`, (b) Rojo ladrillo `#C0392B`.
+- **Decisión:** Azul petróleo `#1B4F72`.
+- **Justificación:** Transmite confianza profesional, autoridad y estabilidad — alineado con la promesa central de Mr. Trámite ("no pagas hasta tener la cita"). Menos agresivo que el rojo, mejor encaje con un gestor ejecutivo. Funciona bien sobre fondo blanco de la "camisa".
+- **Consecuencias:** La corbata será de color `#1B4F72`. Este color se convierte en acento secundario de la paleta de marca (botones primarios, llamadas a la acción, elementos de confianza).
+- **Fecha:** 2026-07-25
+
 ---
 
 ## 6. MVP definido
@@ -195,7 +213,7 @@ La primera iteración del ciclo metodológico (`[LOGAN]` Sección 4.2) debe prod
 | DB (MVP) | SQLite | Aprobado (migración a Postgres tras los primeros clientes) |
 | DB (prod) | Postgres (Neon) | Pendiente de decisión |
 | Auth | NextAuth.js v4 | Pendiente de decisión |
-| Pagos | Transferencia + Mercado Pago / Stripe | Pendiente de decisión (Sección 8) |
+| Pagos | Transferencia + Mercado Pago | Aprobado (DEC-007) — Stripe en backlog |
 | Hosting | Vercel Free en MVP | Pendiente de decisión |
 | Storage de documentos | Local en MVP → Cloudinary/S3 tras clientes | Pendiente de decisión |
 | Bot de IA | z-ai-web-dev-sdk (fase 2) | Pendiente |
@@ -258,7 +276,7 @@ Análisis del logo actual (realizado con VLM):
 |---|---|---|
 | Negro principal | `#1A1A1A` | Contornos, texto (menos agresivo que `#000`) |
 | Blanco | `#FFFFFF` | Fondos, camisa |
-| Acento corbata | `#1B4F72` (azul petróleo) o `#C0392B` (rojo ladrillo) | Pendiente de decisión (DEC-008) |
+| Acento corbata | `#1B4F72` (azul petróleo) | Aprobado (DEC-008) — botones primarios, CTAs, elementos de confianza |
 | Gris neutro | `#F5F5F5` | Fondos secundarios |
 
 ### 9.3 Mejoras a ejecutar
@@ -278,7 +296,7 @@ Análisis del logo actual (realizado con VLM):
 4. **Versión icono:** Solo rostro (lentes + bigote) para favicon y avatar de app.
 5. **Versión PWA:** 512x512 y 192x192 con maskable.
 
-> **Pendiente de decisión (DEC-008):** Color de la corbata (azul petróleo vs rojo ladrillo). Recomendación: azul petróleo `#1B4F72` (confianza profesional, menos agresivo).
+> **Resuelto (DEC-008):** Color de la corbata = azul petróleo `#1B4F72`.
 
 ---
 
@@ -344,12 +362,12 @@ Análisis del logo actual (realizado con VLM):
 
 ### Próximos pasos inmediatos
 
-1. Aprobar esta Biblia (v0.1 → v0.2 "En revisión").
-2. Resolver decisiones pendientes (DEC-007 pasarela de pago, DEC-008 color de corbata).
-3. Subir Biblia al repo `appsmx/mrtramite`.
-4. Pasar a `[estado:arquitectura]`: diseñar la estructura de la web + CRM y el schema de base de datos.
-5. Producir versión actualizada del logo (con corbata).
-6. Construir MVP (Fase 5 de `[LOGAN]`).
+1. ✅ Aprobar esta Biblia (v0.1 → v0.2 "En revisión").
+2. ✅ Resolver decisiones pendientes (DEC-007 Mercado Pago, DEC-008 corbata azul petróleo).
+3. ✅ Subir Biblia al repo `appsmx/mrtramite`.
+4. → Pendiente: Pasar a `[estado:arquitectura]`: diseñar la estructura de la web + CRM y el schema de base de datos.
+5. → Pendiente: Producir versión actualizada del logo (con corbata azul petróleo).
+6. → Pendiente: Construir MVP (Fase 5 de `[LOGAN]`).
 
 ---
 
@@ -357,8 +375,8 @@ Análisis del logo actual (realizado con VLM):
 
 - [ ] Definir precios de trámites secundarios (pasaporte, licencia, INE).
 - [ ] Definir precio del servicio de "avance de cita".
-- [ ] DEC-007: Confirmar pasarela de pago (recomendación: Mercado Pago primero).
-- [ ] DEC-008: Color de corbata (recomendación: azul petróleo `#1B4F72`).
+- [x] DEC-007: Pasarela de pago inicial → **Mercado Pago** (aprobado 2026-07-25).
+- [x] DEC-008: Color de corbata → **Azul petróleo `#1B4F72`** (aprobado 2026-07-25).
 - [ ] Definir datos de contacto oficiales (teléfono, email, dirección si aplica).
 - [ ] Confirmar si el eslogan actual ("Si quieres solución…") se mantiene.
 
