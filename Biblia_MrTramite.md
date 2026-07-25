@@ -1,6 +1,6 @@
 # Biblia_MrTramite.md
 
-**Versión:** 0.5
+**Versión:** 0.6
 **Estado:** En revisión
 **Propósito:** Capturar el conocimiento específico del producto Mr. Trámite —visión, usuarios, reglas de negocio, decisiones aprobadas, MVP, stack tecnológica, identidad visual e implicaciones de privacidad. Autoridad del producto (Nivel Proyecto bajo `[LOGAN]`). Cualquier IA que se incorpore al proyecto debe leer este documento antes de producir resultados.
 **Fecha:** 2026-07-25
@@ -568,22 +568,66 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 
 ## 14. Estado del proyecto
 
-- `[estado:exploración]` → próximos pasos a `[estado:arquitectura]`.
-- **Avance real actual:** 0% en código. Solo existe: logo, redes sociales, bot de Messenger.
-- **Repo:** https://github.com/appsmx/mrtramite (vacío — esta Biblia será el primer commit).
+- `[estado:arquitectura]` — schema Prisma diseñado y aplicado a DB de desarrollo.
+- **Avance real actual:** Documentación completa (Biblia, DS-160 catalog, wireframes, branding) + schema de DB aplicado. 0% en implementación de UI/API.
+- **Repo documentación:** https://github.com/appsmx/mrtramite (Biblia, DS-160 catalog, branding, wireframes, schema de referencia).
 
 ### Próximos pasos inmediatos
 
-1. ✅ Aprobar esta Biblia (v0.1 → v0.2 → v0.3 "En revisión").
+1. ✅ Aprobar esta Biblia (v0.1 → v0.6).
 2. ✅ Resolver decisiones pendientes (DEC-007 Mercado Pago, DEC-008 corbata azul petróleo).
 3. ✅ Subir Biblia al repo `appsmx/mrtramite`.
 4. ✅ Producir versión actualizada del logo (con corbata azul petróleo) — 3 versiones publicadas en `/branding/`.
-5. → Pendiente: Pasar a `[estado:arquitectura]`: diseñar la estructura de la web + CRM, schema de base de datos, y wireframes.
-6. → En progreso: Construir MVP (Fase 5 de `[LOGAN]`).
+5. ✅ Diseñar wireframes v2 (landing + wizard 10 pasos + admin CRM + portal cliente + plantillas email + admin módulos).
+6. ✅ Diseñar schema Prisma — aplicado a DB de desarrollo, auditado contra DECs.
+7. → Pendiente: Construir MVP (Fase 5 de `[LOGAN]`) — implementación Next.js 16.
 
 ---
 
-## 15. Pendientes (preguntas abiertas)
+## 15. Schema de base de datos
+
+El schema Prisma canónico está en `schema/schema.prisma` del repo de documentación, y aplicado al proyecto Next.js en `prisma/schema.prisma`. El seed (`schema/seed.ts`) valida las relaciones.
+
+### 15.1 Modelo ER
+
+```
+Usuario (1) ─── (0..1) Cliente
+                  │
+                  └── (1..N) Expediente ── (1) TramiteTipo
+                              │
+                              ├── (1..N) Documento
+                              ├── (1..N) Pago
+                              ├── (1..N) Accion ←── (N) Usuario (autor)
+                              ├── (1..N) Mensaje
+                              └── (1..N) Notificacion
+```
+
+### 15.2 Tablas (9 totales)
+
+| Tabla | Propósito | DEC reflejada |
+|---|---|---|
+| `Usuario` | Auth + rol (4 perfiles) | DEC-013 |
+| `Cliente` | Catálogo maestro de personas | DEC-009 |
+| `TramiteTipo` | Catálogo de módulos (Visa, Pasaporte, etc.) | DEC-010 |
+| `Expediente` | Unidad de trabajo con estado y datos | DEC-009, DEC-016, DEC-017 |
+| `Documento` | Archivos subidos por expediente | DEC-014 (paso 9) |
+| `Pago` | Pagos (Mercado Pago en MVP) | DEC-007 |
+| `Accion` | Audit log del Motor de Acciones | DEC-011 |
+| `Mensaje` | Historial de mensajes por expediente | DEC-005 (CRM unificado) |
+| `Notificacion` | Emails enviados (4 plantillas MVP) | DEC-011 (disparados por acciones) |
+
+### 15.3 Estado de implementación
+
+- ✅ Schema Prisma diseñado (9 tablas, 7 enums).
+- ✅ Aplicado a SQLite de desarrollo (`bun run db:push` exitoso).
+- ✅ Seed ejecutado: módulo Visa activo + 4 inactivos, usuario admin, cliente/expediente de prueba, acción de auditoría.
+- ✅ Auditoría pasada: todas las DECs reflejadas correctamente.
+- [ ] Servicios de dominio (transiciones de estado, generación de folios, hash de passwords, webhooks Mercado Pago, envío de emails).
+- [ ] Migración a Postgres en fase 2.
+
+---
+
+## 16. Pendientes (preguntas abiertas)
 
 - [ ] Definir precios de trámites secundarios (pasaporte, licencia, INE).
 - [ ] Definir precio del servicio de "avance de cita".
