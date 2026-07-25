@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe v2 — Panel Admin / CRM Mr. Trámite (expedientes + motor de acciones)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f0f0; padding: 20px; display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+  .screen { width: 1200px; background: #fff; min-height: 800px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; display: flex; }
+  .wf-label { position: absolute; top: -28px; left: 0; right: 0; text-align: center; font-size: 12px; font-weight: 600; color: #555; letter-spacing: 1px; text-transform: uppercase; }
+  .box { background: #e8e8e8; border: 1.5px dashed #999; color: #555; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 11px; padding: 8px; min-height: 32px; border-radius: 4px; }
+  .box-cta { background: #999; color: #fff; font-weight: 600; min-height: 36px; }
+  .box-action { background: #fff; color: #1B4F72; border: 1.5px solid #1B4F72; font-weight: 600; min-height: 36px; }
+  .box-action.danger { color: #cc3333; border-color: #cc3333; }
+  .box-action.disabled { opacity: 0.4; cursor: not-allowed; }
+  .box-secondary { background: #fff; color: #555; border: 1.5px solid #999; font-weight: 500; min-height: 34px; }
+  .box-logo { min-height: 32px; width: 56px; }
+
+  .sidebar { width: 220px; background: #fafafa; border-right: 1px solid #eee; padding: 14px 12px; flex-shrink: 0; }
+  .sidebar-section { font-size: 9px; text-transform: uppercase; color: #999; letter-spacing: 1px; padding: 10px 8px 4px; }
+  .sidebar-item { padding: 7px 10px; border-radius: 4px; font-size: 11px; color: #555; margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+  .sidebar-item.active { background: #e8e8e8; color: #333; font-weight: 600; }
+  .sidebar-icon { width: 12px; height: 12px; background: #ccc; border-radius: 2px; flex-shrink: 0; }
+  .sidebar-badge { margin-left: auto; padding: 1px 5px; background: #999; color: #fff; border-radius: 8px; font-size: 9px; }
+
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .topbar { padding: 10px 18px; border-bottom: 1px solid #eee; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+  .breadcrumb { font-size: 11px; color: #888; }
+  .topbar-right { display: flex; gap: 6px; align-items: center; }
+  .search-box { background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 7px 10px; font-size: 11px; color: #999; min-width: 200px; }
+  .content { padding: 18px; flex: 1; overflow: auto; }
+  .page-title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 2px; }
+  .page-subtitle { font-size: 11px; color: #888; margin-bottom: 18px; }
+
+  .stats-row { display: flex; gap: 10px; margin-bottom: 18px; }
+  .stat-card { flex: 1; background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; padding: 12px; text-align: left; }
+  .stat-label { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 20px; font-weight: 700; color: #333; margin-top: 4px; }
+  .stat-trend { font-size: 9px; color: #558855; margin-top: 2px; }
+
+  .filter-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+  .filter-tab { padding: 5px 10px; border-radius: 4px; font-size: 10px; background: #f5f5f5; color: #666; }
+  .filter-tab.active { background: #555; color: #fff; }
+
+  .table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .table th { text-align: left; padding: 8px; background: #f5f5f5; color: #666; font-weight: 600; font-size: 9px; text-transform: uppercase; border-bottom: 1px solid #eee; }
+  .table td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: top; }
+  .table tr:hover td { background: #fafafa; }
+  .status-badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 9px; font-weight: 500; }
+  .st-nuevo { background: #e3f2fd; color: #1976d2; }
+  .st-esperando { background: #fff8e0; color: #cc8800; }
+  .st-incompletos { background: #ffe0e0; color: #cc3333; }
+  .st-revision { background: #fff4e0; color: #cc8800; }
+  .st-listo-pago { background: #e8f4e8; color: #336633; }
+  .st-pago-recibido { background: #d4edda; color: #155724; }
+  .st-proceso { background: #e0e0f0; color: #5555cc; }
+  .st-finalizado { background: #d0d0d0; color: #555; }
+  .st-cancelado { background: #f5d0d0; color: #993333; }
+  .st-archivado { background: #f0f0f0; color: #999; }
+  .channel-badge { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 8px; background: #eee; color: #666; }
+  .exp-tag { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 8px; background: #f0f0f0; color: #555; margin-right: 3px; }
+
+  .detail-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; }
+  .detail-card { background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; padding: 14px; }
+  .detail-card h3 { font-size: 12px; font-weight: 700; color: #333; margin-bottom: 10px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 11px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { color: #888; }
+  .detail-value { color: #333; font-weight: 500; }
+  .doc-item { display: flex; justify-content: space-between; padding: 7px 9px; background: #fff; border: 1px solid #eee; border-radius: 4px; margin-bottom: 5px; font-size: 10px; }
+  .timeline-item { display: flex; gap: 9px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 10px; color: #555; }
+  .timeline-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; margin-top: 3px; flex-shrink: 0; }
+  .timeline-dot.done { background: #555; }
+  .timeline-dot.current { background: #cc8800; }
+
+  .actions-panel { background: #fff8e0; border: 1.5px solid #ffcc66; border-radius: 6px; padding: 14px; }
+  .actions-panel h3 { font-size: 12px; font-weight: 700; color: #7a5400; margin-bottom: 8px; }
+  .action-row { display: flex; flex-direction: column; gap: 6px; }
+  .action-info { font-size: 9px; color: #888; margin-top: -3px; padding-left: 4px; text-align: left; }
+</style>
+</head>
+<body>
+
+<!-- VISTA 1: Lista de expedientes (con cliente anidado) -->
+<div class="screen">
+  <div class="wf-label">Panel Admin v2 — Expedientes (modelo Expediente-centric, DEC-009)</div>
+
+  <div class="sidebar">
+    <div class="box box-logo" style="margin-bottom: 14px;">[LOGO]</div>
+    <div class="sidebar-section">Operación</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Dashboard</div>
+    <div class="sidebar-item active"><div class="sidebar-icon"></div> Expedientes <span class="sidebar-badge">14</span></div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Clientes <span class="sidebar-badge">9</span></div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Documentos</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Pagos</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Citas</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Acciones (log)</div>
+    <div class="sidebar-section">Catálogos</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Tipos de trámite</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Módulos</div>
+    <div class="sidebar-section">Sistema</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Ajustes</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Cerrar sesión</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb">Expedientes / Lista</div>
+      <div class="topbar-right">
+        <div class="search-box">🔍 Buscar por folio, cliente o CURP...</div>
+        <div class="box box-secondary" style="min-width: 100px;">+ Cliente externo</div>
+        <div class="box box-cta" style="min-width: 110px;">+ Nuevo expediente</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-title">Expedientes</div>
+      <div class="page-subtitle">Un cliente puede tener N expedientes — cada expediente es una unidad de trabajo independiente</div>
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Activos</div><div class="stat-value">9</div><div class="stat-trend">Requieren atención</div></div>
+        <div class="stat-card"><div class="stat-label">Listos para pago</div><div class="stat-value">2</div><div class="stat-trend">💰 $1,600 por cobrar</div></div>
+        <div class="stat-card"><div class="stat-label">Finalizados (mes)</div><div class="stat-value">5</div><div class="stat-trend">↑ $4,000 ingreso</div></div>
+        <div class="stat-card"><div class="stat-label">Cancelados (mes)</div><div class="stat-value">1</div><div class="stat-trend">Política aplicada</div></div>
+        <div class="stat-card"><div class="stat-label">Tiempo promedio</div><div class="stat-value">3.2 días</div><div class="stat-trend">Solicitud → finalizado</div></div>
+      </div>
+
+      <div class="filter-tabs">
+        <div class="filter-tab active">Todos (14)</div>
+        <div class="filter-tab">Nuevos (2)</div>
+        <div class="filter-tab">Esperando docs (2)</div>
+        <div class="filter-tab">Revisión (2)</div>
+        <div class="filter-tab">En proceso (1)</div>
+        <div class="filter-tab">Listo para pago (2)</div>
+        <div class="filter-tab">Pago recibido (1)</div>
+        <div class="filter-tab">Finalizados (3)</div>
+        <div class="filter-tab">Cancelados (1)</div>
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Folio expediente</th>
+            <th>Cliente</th>
+            <th>Trámite</th>
+            <th>Canal</th>
+            <th>Estado</th>
+            <th>Asignado a</th>
+            <th>Actualizado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>EXP-014-VISA</td>
+            <td>María González<br><span style="color:#999;font-size:9px;">2 expedientes</span></td>
+            <td>Visa</td>
+            <td><span class="channel-badge">Web</span></td>
+            <td><span class="status-badge st-nuevo">NUEVO</span></td>
+            <td>Yo</td>
+            <td>Hace 5 min</td>
+            <td><div class="box box-action">Revisar</div></td>
+          </tr>
+          <tr>
+            <td>EXP-013-VISA</td>
+            <td>Juan Pérez<br><span style="color:#999;font-size:9px;">1 expediente</span></td>
+            <td>Visa</td>
+            <td><span class="channel-badge">WhatsApp</span></td>
+            <td><span class="status-badge st-esperando">ESPERANDO_DOCS</span></td>
+            <td>Yo</td>
+            <td>Hace 1 hr</td>
+            <td><div class="box box-action">Revisar</div></td>
+          </tr>
+          <tr>
+            <td>EXP-012-PASAP</td>
+            <td>María González</td>
+            <td>Pasaporte</td>
+            <td><span class="channel-badge">Web</span></td>
+            <td><span class="status-badge st-incompletos">DOCS_INCOMPLETOS</span></td>
+            <td>Yo</td>
+            <td>Hace 3 hrs</td>
+            <td><div class="box box-action">Solicitar docs</div></td>
+          </tr>
+          <tr>
+            <td>EXP-011-VISA</td>
+            <td>Carlos Ruiz</td>
+            <td>Visa</td>
+            <td><span class="channel-badge">Messenger</span></td>
+            <td><span class="status-badge st-revision">REVISION</span></td>
+            <td>Yo</td>
+            <td>Hace 1 día</td>
+            <td><div class="box box-action">Aprobar docs</div></td>
+          </tr>
+          <tr>
+            <td>EXP-010-VISA</td>
+            <td>Ana López</td>
+            <td>Visa</td>
+            <td><span class="channel-badge">Instagram</span></td>
+            <td><span class="status-badge st-proceso">EN_PROCESO</span></td>
+            <td>Yo</td>
+            <td>Hace 2 días</td>
+            <td><div class="box box-action">Marcar cita</div></td>
+          </tr>
+          <tr>
+            <td>EXP-009-VISA</td>
+            <td>Pedro Martínez</td>
+            <td>Visa</td>
+            <td><span class="channel-badge">Web</span></td>
+            <td><span class="status-badge st-listo-pago">LISTO_PARA_PAGO</span></td>
+            <td>Yo</td>
+            <td>Hace 2 días</td>
+            <td><div class="box box-action">Reenviar pago</div></td>
+          </tr>
+          <tr>
+            <td>EXP-008-VISA</td>
+            <td>Laura Sánchez</td>
+            <td>Visa</td>
+            <td><span class="channel-badge">WhatsApp</span></td>
+            <td><span class="status-badge st-pago-recibido">PAGO_RECIBIDO</span></td>
+            <td>Yo</td>
+            <td>Hace 3 días</td>
+            <td><div class="box box-action">Finalizar</div></td>
+          </tr>
+          <tr>
+            <td>EXP-007-VISA</td>
+            <td>Rosa Díaz</td>
+            <td>Visa</td>
+            <td><span class="channel-badge">Web</span></td>
+            <td><span class="status-badge st-finalizado">FINALIZADO</span></td>
+            <td>Yo</td>
+            <td>Hace 5 días</td>
+            <td><div class="box box-secondary">Ver</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- VISTA 2: Ficha de expediente (con Motor de Acciones visible) -->
+<div class="screen">
+  <div class="wf-label">Panel Admin v2 — Ficha de expediente (Motor de Acciones visible)</div>
+
+  <div class="sidebar">
+    <div class="box box-logo" style="margin-bottom: 14px;">[LOGO]</div>
+    <div class="sidebar-section">Operación</div>
+    <div class="sidebar-item active"><div class="sidebar-icon"></div> Expedientes <span class="sidebar-badge">14</span></div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Clientes</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Documentos</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Pagos</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Acciones (log)</div>
+    <div class="sidebar-section">Catálogos</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Tipos de trámite</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Módulos</div>
+    <div class="sidebar-section">Sistema</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Ajustes</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb">Expedientes / <strong>EXP-011-VISA</strong> / Carlos Ruiz</div>
+      <div class="topbar-right">
+        <div class="box box-secondary" style="min-width: 90px;">← Volver</div>
+        <div class="box box-secondary">Editar datos</div>
+        <div class="box box-secondary">Enviar mensaje</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-title">Carlos Ruiz Martínez · EXP-011-VISA</div>
+      <div class="page-subtitle">
+        Visa Americana · Canal: Messenger · Estado: <span class="status-badge st-revision">REVISION</span> · Creado: 2026-07-24
+      </div>
+
+      <div class="detail-grid">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+
+          <div class="detail-card">
+            <h3>📋 Cliente</h3>
+            <div class="detail-row"><span class="detail-label">Nombre</span><span class="detail-value">Carlos Ruiz Martínez</span></div>
+            <div class="detail-row"><span class="detail-label">CURP</span><span class="detail-value">RUMC880215HDFXXX</span></div>
+            <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">carlos@example.com</span></div>
+            <div class="detail-row"><span class="detail-label">Teléfono</span><span class="detail-value">55 1111 2222</span></div>
+            <div class="detail-row"><span class="detail-label">Canal preferido</span><span class="detail-value">Messenger</span></div>
+            <div class="detail-row"><span class="detail-label">Expedientes previos</span><span class="detail-value">0 (este es el primero)</span></div>
+          </div>
+
+          <div class="detail-card">
+            <h3>📎 Documentos cargados</h3>
+            <div class="doc-item"><span>📄 pasaporte_carlos.pdf</span><span style="color: #558855;">✓ Válido</span></div>
+            <div class="doc-item"><span>📄 acta_nacimiento.pdf</span><span style="color: #558855;">✓ Válido</span></div>
+            <div class="doc-item"><span>📷 foto_pasaporte.jpg</span><span style="color: #cc8800;">⚠ Revisar</span></div>
+            <div class="doc-item"><span>📄 comprobante_domicilio.pdf</span><span style="color: #558855;">✓ Válido</span></div>
+            <div class="doc-item"><span>📄 recibos_sueldo.pdf</span><span style="color: #558855;">✓ Válido</span></div>
+            <div class="box box-secondary" style="margin-top: 6px; font-size: 10px; padding: 6px;">+ Agregar documento</div>
+          </div>
+
+          <div class="detail-card">
+            <h3>📝 Datos DS-160 (capturados por cliente)</h3>
+            <div class="detail-row"><span class="detail-label">Datos personales</span><span class="detail-value">9/9 campos ✓</span></div>
+            <div class="detail-row"><span class="detail-label">Domicilio y familia</span><span class="detail-value">12/12 campos ✓</span></div>
+            <div class="detail-row"><span class="detail-label">Familiares EE.UU.</span><span class="detail-value">2 registrados</span></div>
+            <div class="detail-row"><span class="detail-label">Info laboral</span><span class="detail-value">6/6 campos ✓</span></div>
+            <div class="detail-row"><span class="detail-label">Info académica</span><span class="detail-value">3 niveles ✓</span></div>
+            <div class="detail-row"><span class="detail-label">Viajes y visas previas</span><span class="detail-value">Completo ✓</span></div>
+            <div class="box box-secondary" style="margin-top: 6px; font-size: 10px; padding: 6px;">Ver / editar DS-160 completo</div>
+          </div>
+
+          <div class="detail-card">
+            <h3>💳 Pago</h3>
+            <div class="detail-row"><span class="detail-label">Costo</span><span class="detail-value" style="color: #1B4F72; font-weight: 700;">$800 MXN</span></div>
+            <div class="detail-row"><span class="detail-label">Método</span><span class="detail-value">Mercado Pago (link)</span></div>
+            <div class="detail-row"><span class="detail-label">Estado pago</span><span class="detail-value" style="color: #888;">Pendiente (no enviado)</span></div>
+          </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: TIMELINE + MOTOR DE ACCIONES -->
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+
+          <!-- MOTOR DE ACCIONES — componente central -->
+          <div class="actions-panel">
+            <h3>⚙️ Motor de Acciones (DEC-011)</h3>
+            <div style="font-size: 10px; color: #7a5400; margin-bottom: 10px;">
+              Estado actual: <strong>REVISION</strong>. Acciones disponibles:
+            </div>
+            <div class="action-row">
+              <div class="box box-action">ACC-002: Aprobar documentos</div>
+              <div class="action-info">→ Cambia a EN_PROCESO + email al cliente</div>
+
+              <div class="box box-action">ACC-003: Solicitar docs adicionales</div>
+              <div class="action-info">→ Cambia a DOCS_INCOMPLETOS + email al cliente con lista de faltantes</div>
+            </div>
+            <div style="font-size: 9px; color: #999; margin-top: 10px; padding-top: 8px; border-top: 1px solid #eee;">
+              ⚠️ Validación de puerta (DEC-012): la foto tipo pasaporte está marcada "Revisar". Si apruebas documentos, el sistema te pedirá confirmar.
+            </div>
+          </div>
+
+          <!-- Acciones BLOQUEADAS (no disponibles en este estado) -->
+          <div class="detail-card" style="opacity: 0.5;">
+            <h3>🚫 Acciones no disponibles (en este estado)</h3>
+            <div class="action-row">
+              <div class="box box-action disabled">ACC-004: Cita generada</div>
+              <div class="action-info">Requiere estado EN_PROCESO</div>
+              <div class="box box-action disabled">ACC-005: Pago confirmado</div>
+              <div class="action-info">Requiere estado LISTO_PARA_PAGO (auto vía webhook MP)</div>
+              <div class="box box-action disabled">ACC-006: Trámite finalizado</div>
+              <div class="action-info">Requiere estado PAGO_RECIBIDO</div>
+              <div class="box box-action danger disabled">Cancelar expediente</div>
+              <div class="action-info">Disponible pero requiere justificación</div>
+            </div>
+          </div>
+
+          <!-- TIMELINE -->
+          <div class="detail-card">
+            <h3>📍 Timeline (audit log)</h3>
+            <div class="timeline-item">
+              <div class="timeline-dot done"></div>
+              <div>
+                <strong>Expediente creado</strong><br>
+                <span style="color:#999;font-size:9px;">2026-07-24 · 10:15 · por Cliente (web)</span>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot done"></div>
+              <div>
+                <strong>ACC-001: Documentos recibidos</strong><br>
+                <span style="color:#999;font-size:9px;">2026-07-24 · 10:16 · automático</span><br>
+                <span style="color:#555;">→ Estado cambió a REVISION</span>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot current"></div>
+              <div>
+                <strong>En revisión</strong><br>
+                <span style="color:#999;font-size:9px;">Esperando acción del gestor</span><br>
+                <span style="color:#7a5400;">⚠️ Foto marcada para revisar</span>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div><strong style="color:#999;">ACC-002: Aprobar documentos</strong><br><span style="color:#999;font-size:9px;">Pendiente</span></div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div><strong style="color:#999;">ACC-004: Cita generada</strong><br><span style="color:#999;font-size:9px;">Pendiente</span></div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div><strong style="color:#999;">ACC-005: Pago confirmado</strong><br><span style="color:#999;font-size:9px;">Pendiente (auto MP)</span></div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div><strong style="color:#999;">ACC-006: Trámite finalizado</strong><br><span style="color:#999;font-size:9px;">Pendiente</span></div>
+            </div>
+          </div>
+
+          <!-- POLÍTICAS -->
+          <div class="detail-card" style="background: #fff8e0; border-color: #ffcc66;">
+            <h3 style="color: #7a5400;">⚠️ Políticas aplicables (Sección 4.3)</h3>
+            <div style="font-size: 10px; color: #555; line-height: 1.5;">
+              • Cliente no paga: <strong>cita se cancela</strong>.<br>
+              • Cliente paga y detecta errores en docs: <strong>$300 MXN</strong> por nueva cita.<br>
+              • Cita cancelada por causa externa: <strong>50% del costo</strong> por gestión de nueva cita.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VISTA 3: Modal "Confirmar acción" con validación de puerta -->
+<div class="screen" style="height: 580px;">
+  <div class="wf-label">Panel Admin v2 — Modal: confirmar acción con validación de puerta (DEC-012)</div>
+
+  <div style="position: relative; width: 100%; height: 100%; background: #888; opacity: 0.3;"></div>
+
+  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border-radius: 8px; padding: 22px; width: 500px; box-shadow: 0 8px 40px rgba(0,0,0,0.2);">
+    <div style="font-size: 16px; font-weight: 700; color: #333; margin-bottom: 4px;">ACC-002: Aprobar documentos</div>
+    <div style="font-size: 11px; color: #888; margin-bottom: 16px;">Esta acción cambiará el estado del expediente a <strong>EN_PROCESO</strong>.</div>
+
+    <div style="background: #fff4e0; border: 1.5px solid #ffcc66; border-radius: 4px; padding: 12px; margin-bottom: 16px;">
+      <div style="font-size: 11px; font-weight: 600; color: #7a5400; margin-bottom: 6px;">⚠️ Validación de puerta — 1 problema detectado</div>
+      <div style="font-size: 10px; color: #555; line-height: 1.5;">
+        El documento <strong>"foto_pasaporte.jpg"</strong> está marcado como <em>"Revisar"</em>.<br>
+        ¿Deseas marcarlo como válido antes de aprobar, o solicitar reemplazo?
+      </div>
+    </div>
+
+    <div style="font-size: 11px; color: #555; margin-bottom: 14px;">
+      <strong>Acciones que se ejecutarán automáticamente:</strong>
+      <ul style="margin-left: 18px; margin-top: 6px; font-size: 10px; color: #666;">
+        <li>Estado cambia a <code>EN_PROCESO</code></li>
+        <li>Fecha de aprobación registrada</li>
+        <li>Email al cliente: "Documentos aprobados, en proceso"</li>
+        <li>Timeline actualizado</li>
+      </ul>
+    </div>
+
+    <div style="font-size: 10px; color: #888; margin-bottom: 14px;">
+      Autor: <strong>Yo (Admin)</strong> · Fecha: 2026-07-25 12:34
+    </div>
+
+    <div style="display: flex; gap: 6px;">
+      <div class="box box-secondary" style="flex: 1;">Cancelar</div>
+      <div class="box box-action" style="flex: 1;">Solicitar reemplazo (ACC-003)</div>
+      <div class="box box-cta" style="flex: 1;">Marcar válida + Aprobar</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

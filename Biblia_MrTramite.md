@@ -1,6 +1,6 @@
 # Biblia_MrTramite.md
 
-**Versión:** 0.3
+**Versión:** 0.4
 **Estado:** En revisión
 **Propósito:** Capturar el conocimiento específico del producto Mr. Trámite —visión, usuarios, reglas de negocio, decisiones aprobadas, MVP, stack tecnológica, identidad visual e implicaciones de privacidad. Autoridad del producto (Nivel Proyecto bajo `[LOGAN]`). Cualquier IA que se incorpore al proyecto debe leer este documento antes de producir resultados.
 **Fecha:** 2026-07-25
@@ -159,50 +159,242 @@ Esto exige un **CRM unificado** que registre a todo cliente desde el primer cont
 - **Consecuencias:** La corbata será de color `#1B4F72`. Este color se convierte en acento secundario de la paleta de marca (botones primarios, llamadas a la acción, elementos de confianza).
 - **Fecha:** 2026-07-25
 
+### DEC-009: Modelo de datos Expediente-centric
+
+- **Problema:** Un cliente puede solicitar múltiples trámites a lo largo del tiempo (visa hoy, pasaporte mañana, INE el próximo año). Modelar "cliente → trámite" rompe el sistema al segundo trámite.
+- **Alternativas:** (a) Cliente → Trámite (1 a muchos, sin abstracción intermedia), (b) Cliente → Expediente → Trámite (con expediente como unidad de trabajo), (c) Cliente → N Trámites sin relación entre sí.
+- **Decisión:** Modelo Expediente-centric. Cada cliente puede tener N expedientes; cada expediente corresponde a un trámite específico y contiene sus documentos, estados, mensajes, pagos y timeline.
+- **Justificación:** Permite trazabilidad histórica por cliente, reutilización de datos (un cliente que ya tramitó pasaporte no vuelve a subir acta), y prepara el sistema para módulos futuros. Cambiar el modelo después sería costoso.
+- **Consecuencias:** El schema de DB tiene tablas `Cliente`, `Expediente`, `TramiteTipo`, `Documento`, `Pago`, `Mensaje`, `Accion`. La UI del admin muestra clientes con sus expedientes anidados.
+- **Fecha:** 2026-07-25
+
+### DEC-010: Arquitectura modular por tipo de trámite
+
+- **Problema:** Cada trámite tiene requisitos, documentos y flujo distintos. Construirlos como casos separados produce código no reutilizable.
+- **Alternativas:** (a) Un solo flujo genérico para todos los trámites, (b) Código específico por trámite, (c) Arquitectura modular (plugin pattern) con flujo base común + configuración por módulo.
+- **Decisión:** Arquitectura modular. Existe un flujo base común (expediente → documentos → revisión → pago → entrega) y cada tipo de trámite es un "módulo" que define: campos requeridos, documentos requeridos, prerequisitos, precio, mensajes automatizados.
+- **Justificación:** Permite agregar nuevos trámites (INE, licencia, CURP, RFC, actas, apostillas) sin reescribir el sistema. Alineado con la filosofía "Sistema Operativo para Gestión de Trámites" — los trámites son plugins.
+- **Consecuencias:** En MVP solo se implementa el módulo Visa, pero el schema y la arquitectura soportan módulos desde el día 1. Cada módulo se define como un archivo de configuración (TS/JSON).
+- **Fecha:** 2026-07-25
+
+### DEC-011: Motor de Acciones — la IA no ejecuta trámites
+
+- **Problema:** Distinguir qué hace la IA vs qué hace el humano en el sistema. Riesgo de asumir que la IA "adivina" el estado del trámite.
+- **Alternativas:** (a) IA que detecta automáticamente el estado del trámite, (b) Motor de Acciones explícitas donde cada cambio de estado lo dispara un humano, (c) Híbrido.
+- **Decisión:** Motor de Acciones. La IA nunca ejecuta trámites gubernamentales ni infiere estados. Las automatizaciones (cambiar estado, enviar email, registrar fecha) las dispara una **acción humana explícita** (un botón que pulsa el gestor).
+- **Justificación:** Hace el sistema auditable, predecible y confiable. La IA observa, organiza, valida, sugiere — pero no decide. Cada acción queda registrada con autor, fecha y consecuencia. Alineado con `[LOGAN]` Artículo IX (IA como arquitecto colaborador, no sustituto del criterio humano).
+- **Consecuencias:** Cada cambio de estado en el expediente requiere una acción explícita del gestor. Las acciones se definen en un catálogo (Sección 6.4). El bot conversacional (fase 2) también opera bajo este principio: puede responder preguntas pero no cambiar estados.
+- **Fecha:** 2026-07-25
+
+### DEC-012: Sistema de validaciones / puertas obligatorias
+
+- **Problema:** Los humanos olvidan pasos. Un gestor puede intentar finalizar un expediente sin haber confirmado el pago o sin haber marcado el DS-160 como completado.
+- **Alternativas:** (a) Permitir cualquier transición de estado (libertad total), (b) Bloquear transiciones inválidas con advertencias, (c) Bloquear transiciones inválidas sin excepciones.
+- **Decisión:** Bloquear transiciones inválidas con advertencias claras. El sistema no permite avanzar un expediente al estado "En proceso" si no tiene documentos aprobados; no permite "Finalizar" sin pago confirmado; etc.
+- **Justificación:** Reduce errores, mantiene procesos consistentes, protege al gestor de omisiones costosas. Alineado con `[LOGAN]` Sección 6.2 (puertas de calidad).
+- **Consecuencias:** Cada acción del Motor de Acciones tiene precondiciones validadas. Si no se cumplen, el sistema muestra qué falta. Las precondiciones se definen en el catálogo de acciones (Sección 6.4).
+- **Fecha:** 2026-07-25
+
+### DEC-013: Perfiles de usuario — 4 definidos, 2 habilitados en MVP
+
+- **Problema:** Definir el modelo de permisos del sistema.
+- **Alternativas:** (a) Solo Cliente y Admin, (b) 4 perfiles (Cliente, Asesor, Gestor, Admin) desde el inicio, (c) 4 perfiles definidos en modelo, 2 habilitados en MVP.
+- **Decisión:** Modelo de datos soporta 4 perfiles desde el día 1, pero MVP habilita solo 2: Admin (combina asesor+gestor+admin, para el gestor único que es el usuario hoy) y Cliente. Asesor y Gestor como perfiles separados se habilitan cuando se contrate personal.
+- **Justificación:** Cumple `[LOGAN]` Artículo III (simplicidad). Implementar 4 perfiles sin usuarios reales para cada uno agrega complejidad innecesaria al MVP. La migración de 2 a 4 perfiles es trivial (cambio de rol en DB).
+- **Consecuencias:** Tabla `Usuario` con campo `rol` enum: `CLIENTE`, `ASESOR`, `GESTOR`, `ADMIN`. En MVP solo se asignan `ADMIN` (al gestor) y `CLIENTE`. El schema Prisma define los 4 valores desde el inicio.
+- **Fecha:** 2026-07-25
+
+### DEC-014: Wizard reorganizado en 10 pasos para captura DS-160 estructurada
+
+- **Problema:** El formulario DS-160 requiere capturar 13 categorías de información (datos personales, familiares, laborales, académicas, viajes, visas previas). El wizard original de 5 pasos era insuficiente.
+- **Alternativas:** (a) Un solo formulario largo, (b) Wizard de 5 pasos solo con uploads (cliente sube todo y gestor captura DS-160 manualmente), (c) Wizard de 10 pasos que captura la información estructurada por categorías + uploads.
+- **Decisión:** Wizard de 10 pasos con captura estructurada por categorías. El cliente captura toda la información del DS-160 directamente en la web; el gestor solo revisa y valida.
+- **Justificación:** Reduce el trabajo manual del gestor (ya no captura el DS-160 desde cero). Mejora trazabilidad. Permite al cliente guardar y continuar después (sesión persistente). El catálogo completo de campos está en `DS-160_campos.md` (DEC-015).
+- **Consecuencias:** El wizard pasa de 5 a 10 pasos. Cada paso es una categoría lógica. Se implementa guardado progresivo (el cliente puede salir y volver). El gestor puede editar cualquier campo desde el admin.
+- **Fecha:** 2026-07-25
+
+### DEC-015: Catálogo de campos DS-160 como documento separado
+
+- **Problema:** La lista completa de campos del DS-160 (13 categorías con subcampos) es extensa y detallada. No cabe cómodamente en la Biblia sin abrumar.
+- **Alternativas:** (a) Incluir todo en la Biblia, (b) Crear documento separado `DS-160_campos.md` referenciado desde la Biblia, (c) Definir como archivo de configuración del módulo Visa.
+- **Decisión:** Documento separado `DS-160_campos.md` (autoridad del catálogo Visa) + futura configuración del módulo Visa (`modules/visa.config.ts`) derivada de ese documento.
+- **Justificación:** Respeta `[LOGAN]` Artículo IV (única fuente de verdad). El catálogo es específico del módulo Visa, no del producto entero.
+- **Consecuencias:** El archivo `DS-160_campos.md` vive en el repo y referencia esta decisión. Cuando se implemente el módulo Visa en código, su configuración se derivará de ese catálogo.
+- **Fecha:** 2026-07-25
+
+### DEC-016: Estados estandarizados del expediente (10 estados)
+
+- **Problema:** Los estados libres (texto manual) impiden estadísticas, automatizaciones y reportes.
+- **Alternativas:** (a) Estados libres, (b) Estados estandarizados con enum, (c) Estados estandarizados + sub-estados opcionales.
+- **Decisión:** 10 estados estandarizados con enum: `NUEVO`, `ESPERANDO_DOCS`, `DOCS_INCOMPLETOS`, `REVISION`, `LISTO_PARA_PAGO`, `PAGO_RECIBIDO`, `EN_PROCESO`, `FINALIZADO`, `CANCELADO`, `ARCHIVADO`.
+- **Justificación:** Permite automatizaciones confiables (cada estado dispara acciones distintas), reportes, filtros, y estadísticas. Alineado con el Motor de Acciones (DEC-011) — cada acción cambia el estado a uno de estos 10.
+- **Consecuencias:** El campo `Expediente.estado` es un enum con estos 10 valores. La UI muestra badges de color por estado. Las transiciones válidas se definen en una matriz (DEC-012).
+- **Fecha:** 2026-07-25
+
 ---
 
-## 6. MVP definido
+## 6. Filosofía del producto
 
-### 6.1 Alcance del MVP
+**No construimos una aplicación. Construimos un Sistema Operativo para la Gestión de Trámites.**
+
+### 6.1 Principio rector
+
+La aplicación es una herramienta. El verdadero producto es el sistema. La Visa Americana es simplemente el primer módulo; la arquitectura está preparada para que cualquier trámite futuro (INE, pasaporte, licencia, CURP, RFC, actas, apostillas, regularización vehicular, traducciones) se agregue como plugin sin reescribir la plataforma.
+
+### 6.2 Arquitectura conceptual
+
+```
+Sistema Principal
+│
+├── Usuarios (4 perfiles: Cliente, Asesor, Gestor, Admin)
+├── Clientes (catálogo maestro de personas)
+├── Expedientes (unidad de trabajo — DEC-009)
+├── Documentos (asociados a expedientes)
+├── Pagos (asociados a expedientes)
+├── Mensajes (historial por expediente)
+├── Acciones (audit log + motor de automatizaciones — DEC-011)
+├── Automatizaciones (disparadas por acciones)
+│
+└── Módulos (DEC-010)
+    ├── Visa Americana (MVP)
+    ├── Pasaporte Mexicano (fase 2)
+    ├── INE (fase 2)
+    ├── Licencia (fase 2)
+    └── ... futuros módulos
+```
+
+### 6.3 Flujo universal del expediente
+
+Todos los módulos usan prácticamente el mismo flujo base:
+
+```
+1. Nuevo cliente
+2. Crear expediente
+3. Seleccionar tipo de trámite
+4. Solicitar documentos / información
+5. Esperar documentos
+6. Revisión por gestor
+7. Documentos completos
+8. Generar trámite (gestor realiza el trámite gubernamental)
+9. Enviar revisión al cliente (vista previa)
+10. Cliente aprueba
+11. Esperar pago
+12. Pago confirmado
+13. Ejecutar trámite final
+14. Entregar resultados
+15. Cerrar expediente
+```
+
+Cada paso puede requerir acción humana explícita (DEC-011) y validar prerrequisitos (DEC-012).
+
+### 6.4 Catálogo de acciones del Motor de Acciones (MVP)
+
+Cada acción es explícita (la pulsa un humano) y dispara automatizaciones. Lista de acciones del MVP:
+
+| ID | Acción | Precondiciones | Dispara |
+|---|---|---|---|
+| `ACC-001` | Documentos recibidos | Expediente en `NUEVO` o `ESPERANDO_DOCS` | Cambio de estado a `REVISION` + email al gestor |
+| `ACC-002` | Documentos aprobados | Expediente en `REVISION`, todos los docs requeridos presentes | Cambio de estado a `EN_PROCESO` + notificación al cliente |
+| `ACC-003` | Solicitar documentos adicionales | Expediente en `REVISION` | Cambio de estado a `DOCS_INCOMPLETOS` + email al cliente con lista de faltantes |
+| `ACC-004` | Cita generada | Expediente en `EN_PROCESO`, DS-160 completado | Cambio de estado a `LISTO_PARA_PAGO` + email al cliente con detalles de cita + link de pago |
+| `ACC-005` | Pago confirmado | Expediente en `LISTO_PARA_PAGO`, pago registrado en Mercado Pago | Cambio de estado a `PAGO_RECIBIDO` + email de confirmación |
+| `ACC-006` | Trámite finalizado | Expediente en `PAGO_RECIBIDO`, todos los entregables listos | Cambio de estado a `FINALIZADO` + email al cliente con resultados + solicitud de testimonio |
+
+Acciones fuera del MVP (backlog): `ACC-007` Expediente archivado, `ACC-008` Cancelar expediente, `ACC-009` Reagendar cita, `ACC-010` Reenviar link de pago.
+
+### 6.5 Matriz de transiciones de estado (DEC-012)
+
+| Estado actual | Acciones permitidas | Estado resultante |
+|---|---|---|
+| `NUEVO` | `ACC-001` | `REVISION` |
+| `ESPERANDO_DOCS` | `ACC-001`, `ACC-003` | `REVISION`, `DOCS_INCOMPLETOS` |
+| `DOCS_INCOMPLETOS` | `ACC-001` | `REVISION` |
+| `REVISION` | `ACC-002`, `ACC-003` | `EN_PROCESO`, `DOCS_INCOMPLETOS` |
+| `EN_PROCESO` | `ACC-004` | `LISTO_PARA_PAGO` |
+| `LISTO_PARA_PAGO` | `ACC-005` (automático vía webhook Mercado Pago) | `PAGO_RECIBIDO` |
+| `PAGO_RECIBIDO` | `ACC-006` | `FINALIZADO` |
+| `FINALIZADO` | `ACC-007` (futuro) | `ARCHIVADO` |
+| `CANCELADO` | — (terminal) | — |
+| `ARCHIVADO` | — (terminal) | — |
+
+Cualquier transición no listada es inválida y el sistema la bloquea con advertencia (DEC-012).
+
+---
+
+## 7. MVP definido
+
+### 7.1 Alcance del MVP
 
 La primera iteración del ciclo metodológico (`[LOGAN]` Sección 4.2) debe producir:
 
 1. **Landing page PWA, mobile-first** que:
    - Explique servicios y precios de forma clara.
    - Transmita confianza (mostrar explícitamente "no pagas hasta tener la cita confirmada").
-   - Muestre elementos de identidad visual mejorados (Sección 9).
+   - Muestre elementos de identidad visual mejorados (Sección 10).
    - Tenga aviso de privacidad visible (Sección 11).
 
-2. **Flujo de solicitud de trámite** (cliente):
-   - Selección de trámite.
-   - Validación de prerequisitos (ej: pasaporte vigente para visa).
-   - Carga de documentos requeridos.
-   - Confirmación de que los documentos son correctos.
+2. **Wizard de solicitud de trámite (cliente)** — 10 pasos (DEC-014):
+   - Paso 1: Selección de tipo de trámite (solo Visa habilitada en MVP).
+   - Paso 2: Validación de prerequisitos (pasaporte vigente).
+   - Paso 3: Datos personales básicos (nombre, CURP, contacto).
+   - Paso 4: Información personal extendida (domicilio, estado civil, familia cercana).
+   - Paso 5: Familiares en EE.UU. (directos e indirectos).
+   - Paso 6: Información laboral.
+   - Paso 7: Información académica.
+   - Paso 8: Viajes y visas previas.
+   - Paso 9: Carga de documentos (pasaporte, acta, foto, comprobante).
+   - Paso 10: Revisión + consentimiento + envío.
+   - Guardado progresivo (el cliente puede salir y volver).
+   - Catálogo completo de campos en `DS-160_campos.md` (DEC-015).
 
-3. **Panel de administración / CRM** (gestor):
+3. **Panel de administración / CRM** (gestor, rol `ADMIN` en MVP — DEC-013):
+   - **Vista de clientes** con expedientes anidados (DEC-009).
+   - **Vista de expedientes** con estado, documentos, pagos, timeline, mensajes.
+   - **Motor de Acciones** visible: botones explícitos para cada `ACC-00X` (Sección 6.4).
+   - Validaciones de puertas: el sistema bloquea acciones inválidas (DEC-012).
    - Registro manual de clientes externos (los que llegan por Messenger/WhatsApp/Instagram).
-   - Lista única de clientes con estado de trámite.
-   - Asociación de documentos a cada cliente.
-   - Marcar cita como confirmada → dispara notificación de pago al cliente.
-   - Registrar pago recibido.
+   - Edición de cualquier campo del wizard desde el admin.
+   - Generación de link de pago Mercado Pago al ejecutar `ACC-004`.
 
-4. **Pago post-confirmación**:
-   - Cliente recibe link de pago (transferencia o tarjeta).
-   - Estado del trámite cambia a "pagado" al confirmar.
+4. **Motor de Acciones** (DEC-011) — implementación de las 6 acciones del MVP (`ACC-001` a `ACC-006`).
 
-### 6.2 Fuera del MVP (backlog)
+5. **Pago post-confirmación** (DEC-003 + DEC-007):
+   - Cliente recibe link de Mercado Pago tras `ACC-004`.
+   - Webhook de Mercado Pago dispara `ACC-005` automáticamente.
+   - Estado del expediente cambia a `PAGO_RECIBIDO`.
 
-- Bot de IA conversacional (fase 2).
+6. **Notificaciones por email** (Resend Free):
+   - Plantilla de "solicitud recibida".
+   - Plantilla de "cita confirmada, procede a pagar".
+   - Plantilla de "pago confirmado".
+   - Plantilla de "trámite finalizado".
+
+7. **Portal de cliente** (básico):
+   - Login con email + folio.
+   - Ver estado de su expediente.
+   - Ver detalles de la cita.
+   - Acceder al link de pago.
+   - Descargar comprobantes y resultados tras `ACC-006`.
+
+8. **Aviso de Privacidad** completo (Sección 11) con consentimiento expreso.
+
+### 7.2 Fuera del MVP (backlog)
+
+- Bot de IA conversacional (fase 2). Operará bajo DEC-011: responde preguntas pero no cambia estados.
 - Integración automática con WhatsApp Business API / Messenger / Instagram DM.
 - Avance de cita automático (reagendamiento).
 - App nativa (iOS/Android).
-- Portal de cliente con historial de trámites.
-- Múltiples gestores / cuentas de equipo.
+- Múltiples gestores / cuentas de equipo (habilitar perfiles `ASESOR` y `GESTOR` — DEC-013).
+- Módulos adicionales: Pasaporte, INE, Licencia, CURP, RFC, Actas, Apostillas (DEC-010).
 - Multi-idioma.
+- Acciones avanzadas del Motor: `ACC-007` a `ACC-010`.
+- Reportes y dashboards avanzados para Admin.
+- Programas de referidos.
+- Notificaciones SMS.
 
 ---
 
-## 7. Stack tecnológica (detalle)
+## 8. Stack tecnológica (detalle)
 
 | Capa | Tecnología | Estado |
 |---|---|---|
@@ -221,11 +413,11 @@ La primera iteración del ciclo metodológico (`[LOGAN]` Sección 4.2) debe prod
 
 ---
 
-## 8. Herramientas recomendadas con precios
+## 9. Herramientas recomendadas con precios
 
 > Estrategia: costos casi cero en MVP. Tras los primeros 5 clientes pagados (~$4,000 MXN), se justifican las herramientas Pro.
 
-### 8.1 MVP (casi gratis)
+### 9.1 MVP (casi gratis)
 
 | Herramienta | Plan | Costo | Para qué |
 |---|---|---|---|
@@ -240,7 +432,7 @@ La primera iteración del ciclo metodológico (`[LOGAN]` Sección 4.2) debe prod
 
 **Costo total MVP:** ~$200-500 MXN/año (solo dominio).
 
-### 8.2 Tras primeros 5 clientes (fase 2)
+### 9.2 Tras primeros 5 clientes (fase 2)
 
 | Herramienta | Plan | Costo aprox MXN/mes | Para qué |
 |---|---|---|---|
@@ -257,9 +449,9 @@ La primera iteración del ciclo metodológico (`[LOGAN]` Sección 4.2) debe prod
 
 ---
 
-## 9. Identidad visual
+## 10. Identidad visual
 
-### 9.1 Estado del logo
+### 10.1 Estado del logo
 
 **Logo actualizado y publicado** el 2026-07-25 (commit posterior). 3 versiones disponibles en `/branding/` del repo:
 
@@ -269,7 +461,7 @@ La primera iteración del ciclo metodológico (`[LOGAN]` Sección 4.2) debe prod
 | `logo_horizontal.png` | Headers de web, firmas de email | 1344×768 |
 | `logo_icon.png` | Favicon, avatar de app PWA, navbar | 1024×1024 |
 
-### 9.1.1 Análisis del logo original (referencia histórica)
+### 10.1.1 Análisis del logo original (referencia histórica)
 
 Análisis del logo original (realizado con VLM el 2026-07-25):
 
@@ -280,7 +472,7 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 - **Colores actuales:** Negro `#000000`, blanco `#FFFFFF`, degradado gris `#E8E8E8 → #A0A0A0`.
 - **Estado profesional:** Parcialmente — concepto sólido pero ejecución con estética clipart. Contraste entre tipografía serif seria y guantes cartoon crea disonancia.
 
-### 9.2 Paleta de marca
+### 10.2 Paleta de marca
 
 | Color | Hex | Uso |
 |---|---|---|
@@ -289,7 +481,7 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 | Azul petróleo | `#1B4F72` | Aprobado (DEC-008) — corbata, botones primarios, CTAs, elementos de confianza |
 | Gris neutro | `#F5F5F5` | Fondos secundarios |
 
-### 9.3 Mejoras ejecutadas (2026-07-25)
+### 10.3 Mejoras ejecutadas (2026-07-25)
 
 1. ✅ **Añadida corbata** azul petróleo `#1B4F72` (DEC-006 + DEC-008).
 2. ✅ **Guantes refinados:** estilo flat, con puño visible, sin sombreado cartoon.
@@ -297,7 +489,7 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 4. ✅ **Eliminado el degradado gris** del fondo — ahora blanco puro.
 5. ✅ **3 versiones producidas:** vertical, horizontal, icono.
 
-### 9.4 Pendientes de identidad visual
+### 10.4 Pendientes de identidad visual
 
 - [ ] Versión monocromática (solo negro) para sellos y facturas.
 - [ ] Versión vectorial (.svg) para impresión de alta calidad — encargar a diseñador basándose en las versiones PNG publicadas.
@@ -307,14 +499,14 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 
 ---
 
-## 10. Privacidad y manejo de datos sensibles
+## 11. Privacidad y manejo de datos sensibles
 
-### 10.1 Marco legal aplicable (México)
+### 11.1 Marco legal aplicable (México)
 
 - **Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP)**.
 - Datos personales sensibles que maneja Mr. Trámite: CURP, pasaporte, datos financieros, datos del DS-160 (que incluyen información familiar, laboral, viajes previos).
 
-### 10.2 Obligaciones del proyecto
+### 11.2 Obligaciones del proyecto
 
 1. **Aviso de Privacidad visible** en la web desde el día 1.
 2. **Consentimiento expreso** del cliente para tratar datos sensibles (casilla obligatoria antes de subir documentos).
@@ -323,7 +515,7 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 5. **Retención:** definir cuánto tiempo se conservan los documentos después del trámite (recomendación: 90 días, luego eliminación segura).
 6. **Seguridad:** documentos cifrados en tránsito (HTTPS) y en reposo (storage encriptado).
 
-### 10.3 Pendientes de privacidad
+### 11.3 Pendientes de privacidad
 
 - [ ] Redactar Aviso de Privacidad completo (pendiente hasta tener dominio y datos de contacto finales).
 - [ ] Definir política de retención y eliminación de documentos.
@@ -332,7 +524,7 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 
 ---
 
-## 11. Riesgos identificados
+## 12. Riesgos identificados
 
 | Riesgo | Probabilidad | Impacto | Mitigación |
 |---|---|---|---|
@@ -345,7 +537,7 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 
 ---
 
-## 12. Backlog (fuera del MVP)
+## 13. Backlog (fuera del MVP)
 
 - Bot de IA conversacional ("el secretario") para web y WhatsApp.
 - Integración automática WhatsApp Business API / Messenger / Instagram DM.
@@ -361,7 +553,7 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 
 ---
 
-## 13. Estado del proyecto
+## 14. Estado del proyecto
 
 - `[estado:exploración]` → próximos pasos a `[estado:arquitectura]`.
 - **Avance real actual:** 0% en código. Solo existe: logo, redes sociales, bot de Messenger.
@@ -378,7 +570,7 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 
 ---
 
-## 14. Pendientes (preguntas abiertas)
+## 15. Pendientes (preguntas abiertas)
 
 - [ ] Definir precios de trámites secundarios (pasaporte, licencia, INE).
 - [ ] Definir precio del servicio de "avance de cita".
@@ -389,7 +581,7 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 
 ---
 
-## 15. Glosario del proyecto
+## 16. Glosario del proyecto
 
 | Término | Definición |
 |---|---|
@@ -403,7 +595,7 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 
 ---
 
-## 16. Referencias
+## 17. Referencias
 
 - `[LOGAN]` — Metodología aplicada. Fuente: https://github.com/appsmx/logan
 - `[LOGAN]` Sección 4 — Ciclo metodológico de 8 fases.

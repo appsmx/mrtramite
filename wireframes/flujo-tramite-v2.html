@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe v2 — Flujo de Trámite Mr. Trámite (10 pasos)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f0f0; padding: 20px; display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
+  .phone {
+    width: 375px; background: #fff; min-height: 760px; position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;
+    padding-bottom: 60px;
+  }
+  .wf-label {
+    position: absolute; top: -28px; left: 0; right: 0; text-align: center;
+    font-size: 12px; font-weight: 600; color: #555; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .box {
+    background: #e8e8e8; border: 1.5px dashed #999; color: #555;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; font-size: 11px; padding: 10px; min-height: 36px;
+    border-radius: 4px;
+  }
+  .box-cta { background: #999; color: #fff; font-weight: 600; min-height: 44px; }
+  .box-secondary { background: #fff; color: #555; border: 1.5px solid #999; font-weight: 500; min-height: 40px; }
+  .box-save { background: #f0f0f0; color: #666; min-height: 36px; font-size: 10px; }
+  .box-logo { min-height: 36px; width: 60px; }
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; border-bottom: 1px solid #eee; background: #fafafa;
+  }
+  .progress-bar { display: flex; padding: 10px 14px; gap: 3px; background: #f5f5f5; border-bottom: 1px solid #eee; }
+  .progress-step { flex: 1; height: 4px; background: #ccc; border-radius: 2px; }
+  .progress-step.active { background: #555; }
+  .progress-step.done { background: #777; }
+  .step-label { font-size: 10px; color: #888; padding: 0 14px 6px; background: #f5f5f5; display: flex; justify-content: space-between; }
+  .content { padding: 20px 14px; }
+  .step-title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 4px; }
+  .step-subtitle { font-size: 11px; color: #666; margin-bottom: 16px; }
+  .field-group { margin-bottom: 12px; text-align: left; }
+  .field-label { display: block; font-size: 10px; color: #666; margin-bottom: 4px; font-weight: 500; }
+  .field-label .req { color: #cc3333; }
+  .field-input {
+    background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;
+    padding: 10px; font-size: 11px; color: #999; min-height: 38px;
+    display: flex; align-items: center;
+  }
+  .field-input.filled { color: #555; background: #fff; }
+  .field-row { display: flex; gap: 8px; }
+  .field-row > * { flex: 1; }
+  .section-divider { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin: 14px 0 8px; padding-top: 10px; border-top: 1px solid #eee; font-weight: 600; }
+  .repeat-btn {
+    background: #f0f0f0; padding: 8px; border-radius: 4px; font-size: 10px;
+    color: #555; text-align: center; margin-top: 6px; border: 1px dashed #aaa;
+  }
+  .alert {
+    background: #fff4e0; border: 1px solid #ffcc66; padding: 10px;
+    border-radius: 4px; font-size: 10px; color: #7a5400; margin-bottom: 14px;
+    text-align: left;
+  }
+  .alert-title { font-weight: 600; margin-bottom: 4px; }
+  .upload-box {
+    background: #f9f9f9; border: 2px dashed #aaa; border-radius: 6px;
+    padding: 16px; text-align: center; font-size: 10px; color: #888;
+    margin-bottom: 8px;
+  }
+  .upload-icon { font-size: 20px; margin-bottom: 6px; }
+  .upload-file {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 10px; background: #f0f0f0; border-radius: 4px;
+    margin-bottom: 6px; font-size: 10px; color: #555;
+  }
+  .footer-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    display: flex; gap: 6px; padding: 10px 14px; background: #fff;
+    border-top: 1px solid #eee;
+  }
+  .footer-bar .box { flex: 1; }
+  .check-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; text-align: left; font-size: 10px; color: #555; }
+  .check-box { width: 14px; height: 14px; border: 1.5px solid #999; border-radius: 3px; flex-shrink: 0; margin-top: 1px; }
+  .check-box.checked { background: #555; border-color: #555; }
+  .summary-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 11px; }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { color: #666; }
+  .summary-value { color: #333; font-weight: 500; }
+  .success-icon {
+    width: 56px; height: 56px; background: #d0d0d0; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;
+    font-size: 28px; color: #555;
+  }
+  .info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 10px; background: #f5f5f5; border-radius: 4px; margin-bottom: 4px;
+    font-size: 10px; color: #555;
+  }
+  .info-row-label { color: #666; }
+  .info-row-value { color: #333; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- PASO 1/10: Selección de trámite -->
+<div class="phone">
+  <div class="wf-label">Paso 1/10 — Selección de trámite</div>
+  <div class="header">
+    <div class="box box-logo">[LOGO]</div>
+    <div style="font-size: 10px; color: #888;">Cancelar</div>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-step active"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div>
+  </div>
+  <div class="step-label"><span>Paso 1 de 10</span><span>Tu progreso se guarda ✓</span></div>
+  <div class="content">
+    <div class="step-title">¿Qué trámite necesitas?</div>
+    <div class="step-subtitle">Selecciona el trámite que quieres gestionar</div>
+    <div style="border: 1.5px solid #555; border-radius: 6px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: #f0f0f0;">
+      <div style="text-align: left;">
+        <div style="font-size: 12px; font-weight: 600; color: #333;">Visa Americana de turista</div>
+        <div style="font-size: 9px; color: #888; margin-top: 2px;">Incluye DS-160 + cita consular</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 12px; font-weight: 600; color: #555;">$800</div>
+        <div style="font-size: 8px; padding: 1px 5px; background: #ddd; border-radius: 2px; color: #555;">DISPONIBLE</div>
+      </div>
+    </div>
+    <div style="border: 1.5px solid #ccc; border-radius: 6px; padding: 12px; margin-bottom: 8px; opacity: 0.5; display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-size: 11px; color: #666;">Pasaporte Mexicano</div>
+      <div style="font-size: 9px; padding: 1px 5px; background: #eee; border-radius: 2px; color: #888;">PRÓXIMAMENTE</div>
+    </div>
+    <div style="border: 1.5px solid #ccc; border-radius: 6px; padding: 12px; margin-bottom: 8px; opacity: 0.5; display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-size: 11px; color: #666;">Licencia de conducir</div>
+      <div style="font-size: 9px; padding: 1px 5px; background: #eee; border-radius: 2px; color: #888;">PRÓXIMAMENTE</div>
+    </div>
+    <div style="border: 1.5px solid #ccc; border-radius: 6px; padding: 12px; opacity: 0.5; display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-size: 11px; color: #666;">INE</div>
+      <div style="font-size: 9px; padding: 1px 5px; background: #eee; border-radius: 2px; color: #888;">PRÓXIMAMENTE</div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <div class="box box-secondary">← Atrás</div>
+    <div class="box box-cta">Continuar →</div>
+  </div>
+</div>
+
+<!-- PASO 2/10: Prerequisitos visa -->
+<div class="phone">
+  <div class="wf-label">Paso 2/10 — Prerequisitos visa</div>
+  <div class="header"><div class="box box-logo">[LOGO]</div><div style="font-size: 10px; color: #888;">Cancelar</div></div>
+  <div class="progress-bar">
+    <div class="progress-step done"></div><div class="progress-step active"></div><div class="progress-step"></div>
+    <div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div>
+  </div>
+  <div class="step-label"><span>Paso 2 de 10</span><span>Tu progreso se guarda ✓</span></div>
+  <div class="content">
+    <div class="step-title">Antes de continuar</div>
+    <div class="step-subtitle">Requisito obligatorio para Visa Americana</div>
+    <div class="alert">
+      <div class="alert-title">⚠️ Requisito fundacional</div>
+      Para tramitar la Visa Americana, <strong>debes contar con pasaporte mexicano vigente</strong> al momento de la cita. Mínimo 6 meses de vigencia.
+    </div>
+    <div class="check-row"><div class="check-box checked"></div><div><strong>Tengo pasaporte vigente</strong><br>Cumple con 6+ meses de vigencia.</div></div>
+    <div class="check-row"><div class="check-box"></div><div><strong>No tengo pasaporte vigente</strong><br>Te sugerimos tramitarlo primero.</div></div>
+  </div>
+  <div class="footer-bar">
+    <div class="box box-secondary">← Atrás</div>
+    <div class="box box-cta">Continuar →</div>
+  </div>
+</div>
+
+<!-- PASO 3/10: Datos personales + contacto -->
+<div class="phone">
+  <div class="wf-label">Paso 3/10 — Datos personales y contacto</div>
+  <div class="header"><div class="box box-logo">[LOGO]</div><div style="font-size: 10px; color: #888;">Cancelar</div></div>
+  <div class="progress-bar">
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step active"></div>
+    <div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div>
+  </div>
+  <div class="step-label"><span>Paso 3 de 10</span><span>Tu progreso se guarda ✓</span></div>
+  <div class="content">
+    <div class="step-title">Tus datos personales</div>
+    <div class="step-subtitle">Categorías 1, 2, 3, 4, 5 del DS-160</div>
+
+    <div class="section-divider">Pasaporte</div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Número pasaporte <span class="req">*</span></label><div class="field-input filled">G12345678</div></div>
+      <div class="field-group"><label class="field-label">Fecha emisión <span class="req">*</span></label><div class="field-input filled">2024-03-15</div></div>
+    </div>
+    <div class="field-group"><label class="field-label">Fecha expiración <span class="req">*</span></label><div class="field-input filled">2034-03-15</div></div>
+
+    <div class="section-divider">Datos personales</div>
+    <div class="field-group"><label class="field-label">Nombre completo (como en pasaporte) <span class="req">*</span></label><div class="field-input filled">Juan Pérez García</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Sexo <span class="req">*</span></label><div class="field-input">[ Masculino ]</div></div>
+      <div class="field-group"><label class="field-label">Fecha nacimiento <span class="req">*</span></label><div class="field-input">[ dd/mm/aaaa ]</div></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Lugar nacimiento <span class="req">*</span></label><div class="field-input">[ Ciudad ]</div></div>
+      <div class="field-group"><label class="field-label">CURP <span class="req">*</span></label><div class="field-input">[ 18 caracteres ]</div></div>
+    </div>
+
+    <div class="section-divider">Teléfono y correo</div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Teléfono <span class="req">*</span></label><div class="field-input">[ +52 ]</div></div>
+      <div class="field-group"><label class="field-label">Email <span class="req">*</span></label><div class="field-input">[ email ]</div></div>
+    </div>
+
+    <div class="section-divider">Redes sociales (5 últimos años)</div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Plataforma</label><div class="field-input">[ Selecciona ]</div></div>
+      <div class="field-group"><label class="field-label">Usuario</label><div class="field-input">[ @handle ]</div></div>
+    </div>
+    <div class="repeat-btn">+ Agregar otra red social</div>
+  </div>
+  <div class="footer-bar">
+    <div class="box box-secondary">← Atrás</div>
+    <div class="box box-save" style="flex: 0.5;">Guardar</div>
+    <div class="box box-cta" style="flex: 1;">Continuar →</div>
+  </div>
+</div>
+
+<!-- PASO 4/10: Domicilio + estado civil + padres -->
+<div class="phone">
+  <div class="wf-label">Paso 4/10 — Domicilio, estado civil, padres</div>
+  <div class="header"><div class="box box-logo">[LOGO]</div><div style="font-size: 10px; color: #888;">Cancelar</div></div>
+  <div class="progress-bar">
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step active"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div>
+  </div>
+  <div class="step-label"><span>Paso 4 de 10</span><span>Tu progreso se guarda ✓</span></div>
+  <div class="content">
+    <div class="step-title">Domicilio y familia</div>
+    <div class="step-subtitle">Categorías 6, 7, 8 del DS-160</div>
+
+    <div class="section-divider">Domicilio</div>
+    <div class="field-group"><label class="field-label">Calle y número <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Colonia <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">CP <span class="req">*</span></label><div class="field-input">[ 5 dígitos ]</div></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Ciudad <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">Estado <span class="req">*</span></label><div class="field-input">[ Estado mexicano ]</div></div>
+    </div>
+
+    <div class="section-divider">Estado civil</div>
+    <div class="field-group"><label class="field-label">Estado civil <span class="req">*</span></label><div class="field-input">[ Soltero/Casado/... ]</div></div>
+
+    <div class="section-divider">Cónyuge (si casado)</div>
+    <div class="field-group"><label class="field-label">Nombre cónyuge</label><div class="field-input">[ ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Fecha nacimiento</label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">¿Vive en EE.UU.?</label><div class="field-input">[ Sí/No ]</div></div>
+    </div>
+
+    <div class="section-divider">Hijos</div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Nombre</label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">Fecha nacimiento</label><div class="field-input">[ ]</div></div>
+    </div>
+    <div class="repeat-btn">+ Agregar otro hijo</div>
+
+    <div class="section-divider">Padres</div>
+    <div class="field-group"><label class="field-label">Nombre del padre <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Fecha nacimiento <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">¿Vive en EE.UU.? <span class="req">*</span></label><div class="field-input">[ Sí/No ]</div></div>
+    </div>
+    <div class="field-group"><label class="field-label">Nombre de la madre <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Fecha nacimiento <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">¿Vive en EE.UU.? <span class="req">*</span></label><div class="field-input">[ Sí/No ]</div></div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <div class="box box-secondary">← Atrás</div>
+    <div class="box box-save" style="flex: 0.5;">Guardar</div>
+    <div class="box box-cta" style="flex: 1;">Continuar →</div>
+  </div>
+</div>
+
+<!-- PASO 5/10: Familiares en EE.UU. -->
+<div class="phone">
+  <div class="wf-label">Paso 5/10 — Familiares en EE.UU.</div>
+  <div class="header"><div class="box box-logo">[LOGO]</div><div style="font-size: 10px; color: #888;">Cancelar</div></div>
+  <div class="progress-bar">
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step done"></div><div class="progress-step active"></div><div class="progress-step"></div>
+    <div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div>
+  </div>
+  <div class="step-label"><span>Paso 5 de 10</span><span>Tu progreso se guarda ✓</span></div>
+  <div class="content">
+    <div class="step-title">Familiares en EE.UU.</div>
+    <div class="step-subtitle">Categorías 9 y 10 del DS-160</div>
+
+    <div class="section-divider">Familiares directos</div>
+    <div style="font-size: 10px; color: #888; margin-bottom: 8px;">Padre, madre, hijo/a, hermano/a, esposo/a, prometido/a</div>
+    <div class="field-group"><label class="field-label">¿Tiene familiares directos en EE.UU.? <span class="req">*</span></label><div class="field-input">[ Sí / No ]</div></div>
+    <div class="field-group"><label class="field-label">Nombre completo</label><div class="field-input">[ ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Parentesco</label><div class="field-input">[ Padre/Madre/Hijo/... ]</div></div>
+      <div class="field-group"><label class="field-label">Estatus migratorio</label><div class="field-input">[ Ciudadano/Residente/... ]</div></div>
+    </div>
+    <div class="repeat-btn">+ Agregar otro familiar directo</div>
+
+    <div class="section-divider">Otros parientes (indirectos)</div>
+    <div style="font-size: 10px; color: #888; margin-bottom: 8px;">Tíos, primos, abuelos, etc.</div>
+    <div class="field-group"><label class="field-label">¿Tiene otros parientes en EE.UU.? <span class="req">*</span></label><div class="field-input">[ Sí / No ]</div></div>
+    <div class="field-group"><label class="field-label">Nombre completo</label><div class="field-input">[ ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Parentesco</label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">Estatus migratorio</label><div class="field-input">[ ]</div></div>
+    </div>
+    <div class="repeat-btn">+ Agregar otro pariente</div>
+  </div>
+  <div class="footer-bar">
+    <div class="box box-secondary">← Atrás</div>
+    <div class="box box-save" style="flex: 0.5;">Guardar</div>
+    <div class="box box-cta" style="flex: 1;">Continuar →</div>
+  </div>
+</div>
+
+<!-- PASO 6/10: Información laboral -->
+<div class="phone">
+  <div class="wf-label">Paso 6/10 — Información laboral</div>
+  <div class="header"><div class="box box-logo">[LOGO]</div><div style="font-size: 10px; color: #888;">Cancelar</div></div>
+  <div class="progress-bar">
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step active"></div>
+    <div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div>
+  </div>
+  <div class="step-label"><span>Paso 6 de 10</span><span>Tu progreso se guarda ✓</span></div>
+  <div class="content">
+    <div class="step-title">Información laboral</div>
+    <div class="step-subtitle">Categoría 11 del DS-160</div>
+
+    <div class="field-group"><label class="field-label">Situación laboral <span class="req">*</span></label><div class="field-input filled">[ Empleado ]</div></div>
+
+    <div class="section-divider">Empleo actual</div>
+    <div class="field-group"><label class="field-label">Nombre de la empresa <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Teléfono <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">Fecha ingreso <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+    </div>
+    <div class="field-group"><label class="field-label">Dirección de la empresa <span class="req">*</span></label><div class="field-input">[ ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Ingreso mensual (MXN) <span class="req">*</span></label><div class="field-input">[ $ ]</div></div>
+      <div class="field-group"><label class="field-label">Moneda</label><div class="field-input">[ MXN ]</div></div>
+    </div>
+    <div class="field-group"><label class="field-label">Descripción de actividades / funciones <span class="req">*</span></label><div class="field-input" style="min-height: 70px; align-items: flex-start; padding-top: 8px;">[ Describe tu puesto, responsabilidades, etc. ]</div></div>
+  </div>
+  <div class="footer-bar">
+    <div class="box box-secondary">← Atrás</div>
+    <div class="box box-save" style="flex: 0.5;">Guardar</div>
+    <div class="box box-cta" style="flex: 1;">Continuar →</div>
+  </div>
+</div>
+
+<!-- PASO 7/10: Información académica -->
+<div class="phone">
+  <div class="wf-label">Paso 7/10 — Información académica</div>
+  <div class="header"><div class="box box-logo">[LOGO]</div><div style="font-size: 10px; color: #888;">Cancelar</div></div>
+  <div class="progress-bar">
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step active"></div><div class="progress-step"></div><div class="progress-step"></div>
+    <div class="progress-step"></div>
+  </div>
+  <div class="step-label"><span>Paso 7 de 10</span><span>Tu progreso se guarda ✓</span></div>
+  <div class="content">
+    <div class="step-title">Información académica</div>
+    <div class="step-subtitle">Categoría 12 del DS-160</div>
+
+    <div class="section-divider">Secundaria</div>
+    <div class="field-group"><label class="field-label">¿Estudió secundaria? <span class="req">*</span></label><div class="field-input">[ Sí/No ]</div></div>
+    <div class="field-group"><label class="field-label">Nombre de la escuela</label><div class="field-input">[ ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Fecha ingreso</label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">Fecha terminación</label><div class="field-input">[ ]</div></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Teléfono</label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">Domicilio</label><div class="field-input">[ ]</div></div>
+    </div>
+
+    <div class="section-divider">Preparatoria / Bachillerato</div>
+    <div class="field-group"><label class="field-label">¿Estudió preparatoria? <span class="req">*</span></label><div class="field-input">[ Sí/No ]</div></div>
+    <div class="field-group"><label class="field-label">Nombre de la escuela</label><div class="field-input">[ ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Fecha ingreso</label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">Fecha terminación</label><div class="field-input">[ ]</div></div>
+    </div>
+
+    <div class="section-divider">Universidad / Técnico</div>
+    <div class="field-group"><label class="field-label">¿Estudió universidad/técnico?</label><div class="field-input">[ Sí/No ]</div></div>
+    <div class="field-group"><label class="field-label">Nombre de la escuela</label><div class="field-input">[ ]</div></div>
+    <div class="repeat-btn">+ Agregar otra institución (maestría, doctorado)</div>
+  </div>
+  <div class="footer-bar">
+    <div class="box box-secondary">← Atrás</div>
+    <div class="box box-save" style="flex: 0.5;">Guardar</div>
+    <div class="box box-cta" style="flex: 1;">Continuar →</div>
+  </div>
+</div>
+
+<!-- PASO 8/10: Viajes y visas previas -->
+<div class="phone">
+  <div class="wf-label">Paso 8/10 — Viajes y visas previas</div>
+  <div class="header"><div class="box box-logo">[LOGO]</div><div style="font-size: 10px; color: #888;">Cancelar</div></div>
+  <div class="progress-bar">
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step done"></div><div class="progress-step active"></div><div class="progress-step"></div>
+    <div class="progress-step"></div>
+  </div>
+  <div class="step-label"><span>Paso 8 de 10</span><span>Tu progreso se guarda ✓</span></div>
+  <div class="content">
+    <div class="step-title">Viajes y visas previas</div>
+    <div class="step-subtitle">Categoría 13 del DS-160</div>
+
+    <div class="section-divider">Viajes en los últimos 5 años</div>
+    <div class="field-group"><label class="field-label">¿Ha visitado otros países en últimos 5 años? <span class="req">*</span></label><div class="field-input">[ Sí/No ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">País visitado</label><div class="field-input">[ Selecciona ]</div></div>
+      <div class="field-group"><label class="field-label">Fecha del viaje</label><div class="field-input">[ ]</div></div>
+    </div>
+    <div class="field-group"><label class="field-label">Duración (días)</label><div class="field-input">[ ]</div></div>
+    <div class="repeat-btn">+ Agregar otro país</div>
+
+    <div class="section-divider">Visa americana anterior</div>
+    <div class="field-group"><label class="field-label">¿Ha tenido visa americana antes? <span class="req">*</span></label><div class="field-input">[ Sí/No ]</div></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Tipo de visa</label><div class="field-input">[ B1/B2, F1, ... ]</div></div>
+      <div class="field-group"><label class="field-label">Número visa anterior</label><div class="field-input">[ ]</div></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Fecha emisión</label><div class="field-input">[ ]</div></div>
+      <div class="field-group"><label class="field-label">Fecha expiración</label><div class="field-input">[ ]</div></div>
+    </div>
+
+    <div class="section-divider">Negación de visa</div>
+    <div class="field-group"><label class="field-label">¿Le han negado una visa antes? <span class="req">*</span></label><div class="field-input">[ Sí/No ]</div></div>
+    <div class="field-group"><label class="field-label">Motivo de negación</label><div class="field-input" style="min-height: 50px; align-items: flex-start; padding-top: 8px;">[ Describe si aplica ]</div></div>
+    <div class="check-row"><div class="check-box"></div><div>¿Ha sido negado ingreso a EE.UU.?</div></div>
+    <div class="check-row"><div class="check-box"></div><div>¿Ha trabajado ilegalmente en EE.UU.?</div></div>
+  </div>
+  <div class="footer-bar">
+    <div class="box box-secondary">← Atrás</div>
+    <div class="box box-save" style="flex: 0.5;">Guardar</div>
+    <div class="box box-cta" style="flex: 1;">Continuar →</div>
+  </div>
+</div>
+
+<!-- PASO 9/10: Carga de documentos -->
+<div class="phone">
+  <div class="wf-label">Paso 9/10 — Carga de documentos</div>
+  <div class="header"><div class="box box-logo">[LOGO]</div><div style="font-size: 10px; color: #888;">Cancelar</div></div>
+  <div class="progress-bar">
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step active"></div>
+    <div class="progress-step"></div>
+  </div>
+  <div class="step-label"><span>Paso 9 de 10</span><span>Tu progreso se guarda ✓</span></div>
+  <div class="content">
+    <div class="step-title">Sube tus documentos</div>
+    <div class="step-subtitle">PDF, JPG o PNG · Máx 10MB c/u</div>
+
+    <div class="field-group">
+      <label class="field-label">Pasaporte vigente (página de datos) <span class="req">*</span></label>
+      <div class="upload-file"><span>📄 pasaporte_juan.pdf</span><span style="color: #555;">✓ Subido</span></div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Acta de nacimiento <span class="req">*</span></label>
+      <div class="upload-box"><div class="upload-icon">⬆️</div>Arrastra o haz clic</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Foto tipo pasaporte (5x5 cm) <span class="req">*</span></label>
+      <div class="upload-box"><div class="upload-icon">⬆️</div>Arrastra o haz clic</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Comprobante de domicilio</label>
+      <div class="upload-box"><div class="upload-icon">⬆️</div>Opcional</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Acta de matrimonio (si casado)</label>
+      <div class="upload-box"><div class="upload-icon">⬆️</div>Condicional</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Comprobantes de ingresos (últimos 3 meses)</label>
+      <div class="upload-box"><div class="upload-icon">⬆️</div>Opcional, recomendado</div>
+    </div>
+
+    <div style="margin-top: 12px; padding: 8px; background: #fff4e0; border: 1px solid #ffcc66; border-radius: 4px; font-size: 9px; color: #7a5400;">
+      🔒 Cifrados en tránsito (HTTPS) y reposo. Eliminados 90 días tras el trámite. LFPDPPP.
+    </div>
+  </div>
+  <div class="footer-bar">
+    <div class="box box-secondary">← Atrás</div>
+    <div class="box box-cta">Continuar →</div>
+  </div>
+</div>
+
+<!-- PASO 10/10: Revisión + consentimiento + envío -->
+<div class="phone">
+  <div class="wf-label">Paso 10/10 — Revisión y envío</div>
+  <div class="header"><div class="box box-logo">[LOGO]</div><div style="font-size: 10px; color: #888;">Cancelar</div></div>
+  <div class="progress-bar">
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step done"></div><div class="progress-step done"></div><div class="progress-step done"></div>
+    <div class="progress-step active"></div>
+  </div>
+  <div class="step-label"><span>Paso 10 de 10</span><span>Último paso ✓</span></div>
+  <div class="content">
+    <div class="step-title">Revisa y envía</div>
+    <div class="step-subtitle">Verifica que todo esté correcto</div>
+
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 6px; margin-bottom: 12px; text-align: left;">
+      <div class="summary-row"><span class="summary-label">Trámite</span><span class="summary-value">Visa Americana</span></div>
+      <div class="summary-row"><span class="summary-label">Solicitante</span><span class="summary-value">Juan Pérez García</span></div>
+      <div class="summary-row"><span class="summary-label">Pasaporte</span><span class="summary-value">G12345678 ✓</span></div>
+      <div class="summary-row"><span class="summary-label">Datos personales</span><span class="summary-value">9 campos ✓</span></div>
+      <div class="summary-row"><span class="summary-label">Domicilio y familia</span><span class="summary-value">12 campos ✓</span></div>
+      <div class="summary-row"><span class="summary-label">Familiares EE.UU.</span><span class="summary-value">2 registrados ✓</span></div>
+      <div class="summary-row"><span class="summary-label">Info laboral</span><span class="summary-value">6 campos ✓</span></div>
+      <div class="summary-row"><span class="summary-label">Info académica</span><span class="summary-value">3 niveles ✓</span></div>
+      <div class="summary-row"><span class="summary-label">Viajes y visas previas</span><span class="summary-value">Completo ✓</span></div>
+      <div class="summary-row"><span class="summary-label">Documentos</span><span class="summary-value">3/6 subidos</span></div>
+      <div class="summary-row"><span class="summary-label">Costo</span><span class="summary-value" style="color: #1B4F72; font-weight: 700;">$800 MXN</span></div>
+      <div class="summary-row"><span class="summary-label">Pago</span><span class="summary-value" style="font-size: 9px;">Pendiente — se cobra tras confirmar cita</span></div>
+    </div>
+
+    <div class="check-row"><div class="check-box"></div><div><strong>Consentimiento datos personales</strong><br>Acepto el <u>Aviso de Privacidad</u>. Autorizo tratamiento de datos sensibles para este trámite.</div></div>
+    <div class="check-row"><div class="check-box"></div><div><strong>Términos y condiciones</strong><br>Comprendo la política de cancelación: $300 MXN por nueva cita si los docs resultan incorrectos tras confirmar y pagar.</div></div>
+
+    <div style="margin-top: 12px; padding: 10px; background: #e8f4e8; border: 1px solid #99cc99; border-radius: 4px; font-size: 10px; color: #336633;">
+      💡 <strong>Importante:</strong> No se cobra nada ahora. Recibirás aviso cuando Mr. Trámite genere tu cita.
+    </div>
+  </div>
+  <div class="footer-bar">
+    <div class="box box-secondary">← Atrás</div>
+    <div class="box box-cta">ENVIAR SOLICITUD ✓</div>
+  </div>
+</div>
+
+<!-- PANTALLA POST-ENVÍO -->
+<div class="phone">
+  <div class="wf-label">Post-envío — Solicitud recibida</div>
+  <div class="header"><div class="box box-logo">[LOGO]</div><div></div></div>
+  <div class="content" style="text-align: center; padding-top: 40px;">
+    <div class="success-icon">✓</div>
+    <div class="step-title">¡Solicitud enviada!</div>
+    <div class="step-subtitle" style="margin-bottom: 20px;">Mr. Trámite revisará tu información y documentos.</div>
+    <div style="background: #f5f5f5; padding: 14px; border-radius: 6px; margin-bottom: 20px; text-align: left;">
+      <div class="summary-row"><span class="summary-label">Folio</span><span class="summary-value">MRT-2026-0001</span></div>
+      <div class="summary-row"><span class="summary-label">Expediente</span><span class="summary-value">EXP-001-VISA</span></div>
+      <div class="summary-row"><span class="summary-label">Estado</span><span class="summary-value" style="color: #cc8800;">NUEVO</span></div>
+      <div class="summary-row"><span class="summary-label">Próxima acción</span><span class="summary-value">Revisión por gestor</span></div>
+      <div class="summary-row"><span class="summary-label">Tiempo estimado</span><span class="summary-value">24-48 hrs</span></div>
+    </div>
+    <div class="box box-secondary" style="margin-bottom: 8px;">Ver mi expediente</div>
+    <div class="box box-secondary">Volver al inicio</div>
+    <div style="margin-top: 24px; font-size: 10px; color: #888; line-height: 1.5;">
+      💡 Guarda tu folio. Con él y tu correo podrás acceder a tu expediente y verificar el avance.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
