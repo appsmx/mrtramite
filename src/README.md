@@ -26,6 +26,8 @@ src/
 │   ├── admin-panel.tsx                     # Panel admin (lista + ficha + Motor de Acciones)
 │   ├── cliente-portal.tsx                  # Portal cliente (dashboard + timeline)
 │   ├── login-modal.tsx                     # Modal login con tabs Cliente/Admin
+│   ├── aviso-privacidad.tsx                # Modal Aviso de Privacidad (LFPDPPP, 9 secciones)
+│   ├── terminos-condiciones.tsx            # Modal Términos y Condiciones (8 secciones)
 │   ├── providers.tsx                       # SessionProvider wrapper
 │   └── wizard/
 │       ├── types.ts                        # Tipos WizardData + initialWizardData
@@ -36,7 +38,8 @@ src/
     ├── auth.ts                             # NextAuth config (admin + cliente)
     └── services/
         ├── folio.ts                        # Generador de folios MRT-YYYY-####
-        └── expediente-service.ts           # Servicio principal: crear, ejecutar acción, listar
+        ├── expediente-service.ts           # Servicio principal: crear, ejecutar acción, listar
+        └── email-service.ts                # Servicio de emails (Resend) con 6 plantillas HTML
 ```
 
 ## Stack
@@ -74,8 +77,7 @@ src/
 
 ## Pendientes
 
-- [ ] Emails (Resend) — 4 plantillas del Motor de Acciones
-- [ ] Mercado Pago real (links de pago + webhook verificado)
-- [ ] Aviso de Privacidad completo (LFPDPPP)
+- [ ] Mercado Pago real (links de pago + webhook verificado) — requiere credenciales MP Business
 - [ ] Subida real de archivos a storage (Cloudinary/S3)
 - [ ] OCR de pasaporte (fase 2, con VLM)
+- [ ] Migración a Postgres en producción

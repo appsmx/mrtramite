@@ -38,6 +38,7 @@ model Usuario {
   activo       Boolean        @default(true)
   cliente      Cliente?
   accionesEjecutadas Accion[]
+  expedientesAsignados Expediente[] @relation("ExpedienteAsignado")
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
@@ -80,6 +81,7 @@ enum CanalContacto {
   WHATSAPP
   MESSENGER
   INSTAGRAM
+  EMAIL
   TELEFONO
   OTRO
 }
@@ -131,6 +133,7 @@ model Expediente {
 
   // Control
   asignadoAId     String?        // Usuario gestor/asesor responsable
+  asignadoA       Usuario?       @relation("ExpedienteAsignado", fields: [asignadoAId], references: [id])
   closedAt        DateTime?      // Cuando pasó a FINALIZADO, CANCELADO o ARCHIVADO
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt

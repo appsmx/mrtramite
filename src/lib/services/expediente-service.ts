@@ -119,7 +119,43 @@ export async function crearExpedienteDesdeWizard({ wizardData, adminUserId }: Cr
     },
   })
 
-  return { expediente, cliente, tramiteTipo, accionInit }
+  // 5. Crear notificación SOLICITUD_RECIBIDA + enviar email
+  let notificacion = null
+  if (cliente.email) {
+    notificacion = await db.notificacion.create({
+      data: {
+        expedienteId: expediente.id,
+        tipo: 'SOLICITUD_RECIBIDA',
+        emailDestino: cliente.email,
+        asunto: getAsuntoNotificacion('SOLICITUD_RECIBIDA', folio),
+      },
+    })
+
+    // Enviar email (no bloquea la creación)
+    try {
+      const { enviarEmail } = await import('./email-service')
+      const emailResult = await enviarEmail({
+        to: cliente.email,
+        tipo: 'SOLICITUD_RECIBIDA',
+        folio,
+        nombreCliente: cliente.nombreCompleto,
+        tramiteNombre: tramiteTipo.nombre,
+        precio: tramiteTipo.precio,
+      })
+      await db.notificacion.update({
+        where: { id: notificacion.id },
+        data: {
+          enviado: emailResult.success,
+          enviadoAt: emailResult.success ? new Date() : null,
+          error: emailResult.error || null,
+        },
+      })
+    } catch (emailError) {
+      console.error('Error enviando email de solicitud recibida:', emailError)
+    }
+  }
+
+  return { expediente, cliente, tramiteTipo, accionInit, notificacion }
 }
 
 // ============================================================================
@@ -225,10 +261,64 @@ export async function ejecutarAccion({ folio, codigoAccion, ejecutadoPorId, meta
       })
     }
 
-    return { expediente: expedienteActualizado, accion, notificacion }
+    return {
+      expediente: expedienteActualizado,
+      accion,
+      notificacion,
+      // Datos para envío de email fuera de la transacción
+      _emailData: notificacion
+        ? {
+            tipo: notificacion.tipo,
+            emailDestino: notificacion.emailDestino,
+            folio: expediente.folio,
+            nombreCliente: expediente.cliente.nombreCompleto,
+            tramiteNombre: expediente.tramiteTipo.nombre,
+            precio: expediente.tramiteTipo.precio,
+            citaFecha: expedienteActualizado.citaFecha,
+            citaLugar: expedienteActualizado.citaLugar,
+            citaDireccion: expedienteActualizado.citaDireccion,
+          }
+        : null,
+    }
   })
 
-  return resultado
+  // Enviar email fuera de la transacción (no debe bloquear la DB)
+  if (resultado._emailData) {
+    try {
+      const { enviarEmail } = await import('./email-service')
+      const emailResult = await enviarEmail({
+        to: resultado._emailData.emailDestino,
+        tipo: resultado._emailData.tipo,
+        folio: resultado._emailData.folio,
+        nombreCliente: resultado._emailData.nombreCliente,
+        tramiteNombre: resultado._emailData.tramiteNombre,
+        precio: resultado._emailData.precio,
+        citaFecha: resultado._emailData.citaFecha,
+        citaLugar: resultado._emailData.citaLugar,
+        citaDireccion: resultado._emailData.citaDireccion,
+      })
+      // Actualizar notificación con resultado del envío
+      if (resultado.notificacion) {
+        await db.notificacion.update({
+          where: { id: resultado.notificacion.id },
+          data: {
+            enviado: emailResult.success,
+            enviadoAt: emailResult.success ? new Date() : null,
+            error: emailResult.error || null,
+          },
+        })
+      }
+      if (!emailResult.success) {
+        console.warn(`Email no enviado para ${resultado._emailData.tipo}: ${emailResult.error}`)
+      }
+    } catch (emailError) {
+      console.error('Error enviando email:', emailError)
+    }
+  }
+
+  // Limpiar _emailData antes de retornar
+  const { _emailData, ...resultadoLimpio } = resultado as any
+  return resultadoLimpio
 }
 
 // ============================================================================

@@ -1,6 +1,6 @@
 # Biblia_MrTramite.md
 
-**Versión:** 0.7
+**Versión:** 0.8
 **Estado:** En revisión
 **Propósito:** Capturar el conocimiento específico del producto Mr. Trámite —visión, usuarios, reglas de negocio, decisiones aprobadas, MVP, stack tecnológica, identidad visual e implicaciones de privacidad. Autoridad del producto (Nivel Proyecto bajo `[LOGAN]`). Cualquier IA que se incorpore al proyecto debe leer este documento antes de producir resultados.
 **Fecha:** 2026-07-25
@@ -583,9 +583,10 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 | Panel admin (lista + ficha + Motor) | ✅ Completo | `src/components/admin-panel.tsx` |
 | Portal cliente (dashboard + timeline) | ✅ Completo | `src/components/cliente-portal.tsx` |
 | Webhook Mercado Pago | ✅ Stub | `src/app/api/mercado-pago/webhook/route.ts` |
-| Emails (Resend) | ⏳ Pendiente | — |
-| Mercado Pago (real) | ⏳ Pendiente | — |
-| Aviso de Privacidad completo | ⏳ Pendiente | — |
+| Emails (Resend, 6 plantillas) | ✅ Completo | `src/lib/services/email-service.ts` |
+| Aviso de Privacidad (LFPDPPP) | ✅ Completo | `src/components/aviso-privacidad.tsx` |
+| Términos y Condiciones | ✅ Completo | `src/components/terminos-condiciones.tsx` |
+| Mercado Pago (real) | ⏳ Pendiente | Requiere credenciales externas |
 
 ### Verificación end-to-end (Fase 6 auditoría)
 
@@ -603,14 +604,16 @@ Flujo completo ejecutado y verificado con Agent Browser:
 
 ### Próximos pasos inmediatos
 
-1. ✅ Aprobar esta Biblia (v0.1 → v0.7).
+1. ✅ Aprobar esta Biblia (v0.1 → v0.8).
 2. ✅ Resolver decisiones pendientes (DEC-007 Mercado Pago, DEC-008 corbata azul petróleo).
 3. ✅ Subir Biblia al repo `appsmx/mrtramite`.
 4. ✅ Producir versión actualizada del logo (con corbata azul petróleo) — 3 versiones publicadas en `/branding/`.
 5. ✅ Diseñar wireframes v2 (landing + wizard 10 pasos + admin CRM + portal cliente + plantillas email + admin módulos).
 6. ✅ Diseñar schema Prisma — aplicado a DB de desarrollo, auditado contra DECs.
 7. ✅ Construir MVP (Fase 5 de `[LOGAN]`) — implementación Next.js 16.
-8. → Pendiente: Emails (Resend), Mercado Pago real, Aviso de Privacidad completo.
+8. ✅ Emails (Resend) — 6 plantillas HTML integradas con Motor de Acciones.
+9. ✅ Aviso de Privacidad completo (LFPDPPP) + Términos y Condiciones.
+10. → Pendiente: Mercado Pago real (requiere credenciales externas).
 
 ---
 

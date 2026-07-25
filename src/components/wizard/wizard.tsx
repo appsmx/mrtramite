@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { initialWizardData, type WizardData, type RedSocial, type Hijo, type FamiliarEEUU, type PaisVisitado, TOTAL_STEPS, STEP_TITLES } from './types'
 import { TextField, TextAreaField, SelectField, BooleanField, RepeatableList, StepDivider, InfoNote } from './fields'
+import { AvisoPrivacidad } from '@/components/aviso-privacidad'
+import { TerminosCondiciones } from '@/components/terminos-condiciones'
 
 const STORAGE_KEY = 'mrtramite_wizard_v1'
 const genId = () => Math.random().toString(36).slice(2, 11)
@@ -37,6 +39,8 @@ export function Wizard({ onExit }: WizardProps) {
   const [data, setData] = useState<WizardData>(loadInitialData)
   const [submitted, setSubmitted] = useState(false)
   const [folio, setFolio] = useState<string>('')
+  const [avisoOpen, setAvisoOpen] = useState(false)
+  const [terminosOpen, setTerminosOpen] = useState(false)
 
   // Guardar en localStorage
   const save = useCallback(() => {
@@ -192,7 +196,7 @@ export function Wizard({ onExit }: WizardProps) {
       {/* CONTENIDO */}
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 py-6">
-          <StepContent step={step} data={data} update={update} addDocumento={addDocumento} removeDocumento={removeDocumento} />
+          <StepContent step={step} data={data} update={update} addDocumento={addDocumento} removeDocumento={removeDocumento} onOpenAviso={() => setAvisoOpen(true)} onOpenTerminos={() => setTerminosOpen(true)} />
         </div>
       </main>
 
@@ -220,6 +224,10 @@ export function Wizard({ onExit }: WizardProps) {
           </Button>
         </div>
       </footer>
+
+      {/* Modales legales */}
+      <AvisoPrivacidad open={avisoOpen} onOpenChange={setAvisoOpen} />
+      <TerminosCondiciones open={terminosOpen} onOpenChange={setTerminosOpen} />
     </div>
   )
 }
@@ -228,12 +236,14 @@ export function Wizard({ onExit }: WizardProps) {
 // CONTENIDO DE CADA PASO
 // ============================================================================
 
-function StepContent({ step, data, update, addDocumento, removeDocumento }: {
+function StepContent({ step, data, update, addDocumento, removeDocumento, onOpenAviso, onOpenTerminos }: {
   step: number
   data: WizardData
   update: <K extends keyof WizardData>(key: K, value: WizardData[K]) => void
   addDocumento: (tipo: string, file: File) => void
   removeDocumento: (tipo: string) => void
+  onOpenAviso: () => void
+  onOpenTerminos: () => void
 }) {
   switch (step) {
     case 0: return <Step1Tramite data={data} update={update} />
@@ -245,7 +255,7 @@ function StepContent({ step, data, update, addDocumento, removeDocumento }: {
     case 6: return <Step7Academica data={data} update={update} />
     case 7: return <Step8ViajesVisas data={data} update={update} />
     case 8: return <Step9Documentos data={data} addDocumento={addDocumento} removeDocumento={removeDocumento} />
-    case 9: return <Step10Revision data={data} update={update} />
+    case 9: return <Step10Revision data={data} update={update} onOpenAviso={onOpenAviso} onOpenTerminos={onOpenTerminos} />
     default: return null
   }
 }
@@ -780,7 +790,7 @@ function Step9Documentos({ data, addDocumento, removeDocumento }: {
 }
 
 // --- Paso 10: Revisión y envío ---
-function Step10Revision({ data, update }: { data: WizardData; update: <K extends keyof WizardData>(key: K, value: WizardData[K]) => void }) {
+function Step10Revision({ data, update, onOpenAviso, onOpenTerminos }: { data: WizardData; update: <K extends keyof WizardData>(key: K, value: WizardData[K]) => void; onOpenAviso: () => void; onOpenTerminos: () => void }) {
   const completedSections = [
     { label: 'Trámite', value: 'Visa Americana' },
     { label: 'Solicitante', value: data.nombreCompleto || '—' },
@@ -833,13 +843,21 @@ function Step10Revision({ data, update }: { data: WizardData; update: <K extends
         <label className="flex items-start gap-2 cursor-pointer">
           <Checkbox checked={data.aceptaAvisoPrivacidad} onCheckedChange={(v) => update('aceptaAvisoPrivacidad', v === true)} />
           <span className="text-xs text-foreground/80">
-            <strong>Consentimiento de tratamiento de datos personales.</strong> He leído y acepto el Aviso de Privacidad. Autorizo a Mr. Trámite a tratar mis datos personales y sensibles con la finalidad de gestionar este trámite.
+            <strong>Consentimiento de tratamiento de datos personales.</strong> He leído y acepto el{' '}
+            <button type="button" onClick={(e) => { e.preventDefault(); onOpenAviso(); }} className="text-primary underline hover:text-primary/80 inline">
+              Aviso de Privacidad
+            </button>
+            . Autorizo a Mr. Trámite a tratar mis datos personales y sensibles con la finalidad de gestionar este trámite.
           </span>
         </label>
         <label className="flex items-start gap-2 cursor-pointer">
           <Checkbox checked={data.aceptaTerminos} onCheckedChange={(v) => update('aceptaTerminos', v === true)} />
           <span className="text-xs text-foreground/80">
-            <strong>Términos y condiciones.</strong> Comprendo la política de cancelación: si los documentos resultan incorrectos tras confirmar y pagar, se cobrará $300 MXN por nueva cita.
+            <strong>Términos y condiciones.</strong> He leído y acepto los{' '}
+            <button type="button" onClick={(e) => { e.preventDefault(); onOpenTerminos(); }} className="text-primary underline hover:text-primary/80 inline">
+              términos y condiciones
+            </button>
+            . Comprendo la política de cancelación: si los documentos resultan incorrectos tras confirmar y pagar, se cobrará $300 MXN por nueva cita.
           </span>
         </label>
       </div>

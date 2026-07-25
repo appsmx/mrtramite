@@ -24,6 +24,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { LoginModal } from '@/components/login-modal'
+import { AvisoPrivacidad } from '@/components/aviso-privacidad'
+import { TerminosCondiciones } from '@/components/terminos-condiciones'
 
 interface LandingProps {
   onStartTramite: () => void
@@ -31,6 +33,8 @@ interface LandingProps {
 
 export function Landing({ onStartTramite }: LandingProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [avisoOpen, setAvisoOpen] = useState(false)
+  const [terminosOpen, setTerminosOpen] = useState(false)
 
   const handleStartTramite = () => {
     onStartTramite()
@@ -41,10 +45,16 @@ export function Landing({ onStartTramite }: LandingProps) {
     document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const handleLegalClick = (doc: string) => {
-    toast.info('Próximamente', {
-      description: `${doc} en preparación.`,
-    })
+  const handleAvisoClick = () => {
+    setAvisoOpen(true)
+  }
+
+  const handleTerminosClick = () => {
+    setTerminosOpen(true)
+  }
+
+  const handleCancelacionClick = () => {
+    setTerminosOpen(true)
   }
 
   return (
@@ -489,7 +499,7 @@ export function Landing({ onStartTramite }: LandingProps) {
                 <li>
                   <button
                     className="text-background/70 hover:text-background hover:underline"
-                    onClick={() => handleLegalClick('Aviso de Privacidad completo')}
+                    onClick={handleAvisoClick}
                   >
                     Aviso de Privacidad (LFPDPPP)
                   </button>
@@ -497,7 +507,7 @@ export function Landing({ onStartTramite }: LandingProps) {
                 <li>
                   <button
                     className="text-background/70 hover:text-background hover:underline"
-                    onClick={() => handleLegalClick('Términos y condiciones')}
+                    onClick={handleTerminosClick}
                   >
                     Términos y condiciones
                   </button>
@@ -505,7 +515,7 @@ export function Landing({ onStartTramite }: LandingProps) {
                 <li>
                   <button
                     className="text-background/70 hover:text-background hover:underline"
-                    onClick={() => handleLegalClick('Política de cancelación')}
+                    onClick={handleCancelacionClick}
                   >
                     Política de cancelación
                   </button>
@@ -522,6 +532,10 @@ export function Landing({ onStartTramite }: LandingProps) {
           </div>
         </div>
       </footer>
+
+      {/* Modales legales */}
+      <AvisoPrivacidad open={avisoOpen} onOpenChange={setAvisoOpen} />
+      <TerminosCondiciones open={terminosOpen} onOpenChange={setTerminosOpen} />
     </div>
   )
 }
