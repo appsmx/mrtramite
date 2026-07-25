@@ -1,6 +1,6 @@
 # Biblia_MrTramite.md
 
-**Versión:** 0.6
+**Versión:** 0.7
 **Estado:** En revisión
 **Propósito:** Capturar el conocimiento específico del producto Mr. Trámite —visión, usuarios, reglas de negocio, decisiones aprobadas, MVP, stack tecnológica, identidad visual e implicaciones de privacidad. Autoridad del producto (Nivel Proyecto bajo `[LOGAN]`). Cualquier IA que se incorpore al proyecto debe leer este documento antes de producir resultados.
 **Fecha:** 2026-07-25
@@ -568,19 +568,49 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 
 ## 14. Estado del proyecto
 
-- `[estado:arquitectura]` — schema Prisma diseñado y aplicado a DB de desarrollo.
-- **Avance real actual:** Documentación completa (Biblia, DS-160 catalog, wireframes, branding) + schema de DB aplicado. 0% en implementación de UI/API.
-- **Repo documentación:** https://github.com/appsmx/mrtramite (Biblia, DS-160 catalog, branding, wireframes, schema de referencia).
+- `[estado:construcción]` — MVP funcional implementado y verificado end-to-end.
+- **Avance real actual:** MVP completo (landing + wizard + APIs + auth + panel admin + portal cliente). Flujo core verificado: cliente crea expediente → admin gestiona con Motor de Acciones → cliente ve avance.
+- **Repo documentación:** https://github.com/appsmx/mrtramite (Biblia, DS-160 catalog, branding, wireframes, schema, código fuente de referencia).
+
+### Componentes del MVP implementados
+
+| Componente | Estado | Archivo |
+|---|---|---|
+| Landing page PWA | ✅ Completo | `src/components/landing.tsx` |
+| Wizard 10 pasos (DS-160) | ✅ Completo | `src/components/wizard/wizard.tsx` |
+| APIs backend (CRUD + Motor de Acciones) | ✅ Completo | `src/app/api/expedientes/`, `src/lib/services/` |
+| Auth (NextAuth admin + cliente) | ✅ Completo | `src/lib/auth.ts`, `src/components/login-modal.tsx` |
+| Panel admin (lista + ficha + Motor) | ✅ Completo | `src/components/admin-panel.tsx` |
+| Portal cliente (dashboard + timeline) | ✅ Completo | `src/components/cliente-portal.tsx` |
+| Webhook Mercado Pago | ✅ Stub | `src/app/api/mercado-pago/webhook/route.ts` |
+| Emails (Resend) | ⏳ Pendiente | — |
+| Mercado Pago (real) | ⏳ Pendiente | — |
+| Aviso de Privacidad completo | ⏳ Pendiente | — |
+
+### Verificación end-to-end (Fase 6 auditoría)
+
+Flujo completo ejecutado y verificado con Agent Browser:
+
+1. Landing → click "Iniciar trámite" → wizard 10 pasos → POST /api/expedientes → expediente creado en DB.
+2. Login admin (admin@mrtramite.mx / admin123) → panel admin → lista expedientes.
+3. Click expediente → ficha con Motor de Acciones → ejecutar ACC-001 a ACC-006 desde UI:
+   - ACC-001 Documentos recibidos → NUEVO → REVISION
+   - ACC-002 Aprobar documentos → REVISION → EN_PROCESO
+   - ACC-004 Cita generada (modal con fecha/lugar) → EN_PROCESO → LISTO_PARA_PAGO
+   - ACC-005 Pago confirmado (manual) → LISTO_PARA_PAGO → PAGO_RECIBIDO
+   - ACC-006 Finalizar trámite → PAGO_RECIBIDO → FINALIZADO
+4. Logout admin → login cliente (email + folio) → portal muestra estado FINALIZADO + cita + timeline completo.
 
 ### Próximos pasos inmediatos
 
-1. ✅ Aprobar esta Biblia (v0.1 → v0.6).
+1. ✅ Aprobar esta Biblia (v0.1 → v0.7).
 2. ✅ Resolver decisiones pendientes (DEC-007 Mercado Pago, DEC-008 corbata azul petróleo).
 3. ✅ Subir Biblia al repo `appsmx/mrtramite`.
 4. ✅ Producir versión actualizada del logo (con corbata azul petróleo) — 3 versiones publicadas en `/branding/`.
 5. ✅ Diseñar wireframes v2 (landing + wizard 10 pasos + admin CRM + portal cliente + plantillas email + admin módulos).
 6. ✅ Diseñar schema Prisma — aplicado a DB de desarrollo, auditado contra DECs.
-7. → Pendiente: Construir MVP (Fase 5 de `[LOGAN]`) — implementación Next.js 16.
+7. ✅ Construir MVP (Fase 5 de `[LOGAN]`) — implementación Next.js 16.
+8. → Pendiente: Emails (Resend), Mercado Pago real, Aviso de Privacidad completo.
 
 ---
 
