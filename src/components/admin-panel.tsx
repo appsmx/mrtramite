@@ -319,7 +319,10 @@ export function AdminPanel() {
               <>
                 <ChevronRight className="h-3 w-3" />
                 <button
-                  onClick={() => setView('lista')}
+                  onClick={() => {
+                    setView('lista')
+                    cargarExpedientes()
+                  }}
                   className="hover:text-foreground flex items-center gap-1"
                 >
                   <ArrowLeft className="h-3 w-3" />
@@ -368,7 +371,10 @@ export function AdminPanel() {
             <DetalleExpediente
               expediente={expedienteSeleccionado}
               onEjecutarAccion={ejecutarAccion}
-              onVolver={() => setView('lista')}
+              onVolver={() => {
+                setView('lista')
+                cargarExpedientes() // Recargar lista al volver (estado puede haber cambiado)
+              }}
             />
           )}
         </main>

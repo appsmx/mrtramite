@@ -84,6 +84,17 @@ export async function crearExpedienteDesdeWizard({ wizardData, adminUserId }: Cr
         canalLlegada: 'WEB',
       },
     })
+  } else {
+    // Actualizar datos de contacto si el cliente ya existe (puede haber cambiado email/teléfono)
+    cliente = await db.cliente.update({
+      where: { id: cliente.id },
+      data: {
+        nombreCompleto: wizardData.nombreCompleto || cliente.nombreCompleto,
+        email: wizardData.email || cliente.email,
+        telefono: wizardData.telefono || cliente.telefono,
+        canalPreferido: (wizardData.canalPreferido as any) || cliente.canalPreferido,
+      },
+    })
   }
 
   // 2. Buscar el tipo de trámite (Visa por defecto)

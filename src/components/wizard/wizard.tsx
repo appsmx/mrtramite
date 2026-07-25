@@ -15,6 +15,7 @@ import { AvisoPrivacidad } from '@/components/aviso-privacidad'
 import { TerminosCondiciones } from '@/components/terminos-condiciones'
 
 const STORAGE_KEY = 'mrtramite_wizard_v1'
+const STEP_KEY = 'mrtramite_wizard_step_v1'
 const genId = () => Math.random().toString(36).slice(2, 11)
 
 interface WizardProps {
@@ -34,8 +35,24 @@ function loadInitialData(): WizardData {
   return initialWizardData
 }
 
+function loadInitialStep(): number {
+  if (typeof window === 'undefined') return 0
+  try {
+    const saved = localStorage.getItem(STEP_KEY)
+    if (saved) {
+      const step = parseInt(saved, 10)
+      if (!isNaN(step) && step >= 0 && step < TOTAL_STEPS) {
+        return step
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return 0
+}
+
 export function Wizard({ onExit }: WizardProps) {
-  const [step, setStep] = useState(0) // 0-indexed, 0-9
+  const [step, setStep] = useState(loadInitialStep) // 0-indexed, 0-9
   const [data, setData] = useState<WizardData>(loadInitialData)
   const [submitted, setSubmitted] = useState(false)
   const [folio, setFolio] = useState<string>('')
@@ -102,7 +119,9 @@ export function Wizard({ onExit }: WizardProps) {
       return
     }
     if (step < TOTAL_STEPS - 1) {
-      setStep(step + 1)
+      const newStep = step + 1
+      setStep(newStep)
+      try { localStorage.setItem(STEP_KEY, String(newStep)) } catch {}
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
       handleSubmit()
@@ -111,7 +130,9 @@ export function Wizard({ onExit }: WizardProps) {
 
   const handleBack = () => {
     if (step > 0) {
-      setStep(step - 1)
+      const newStep = step - 1
+      setStep(newStep)
+      try { localStorage.setItem(STEP_KEY, String(newStep)) } catch {}
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
@@ -134,6 +155,7 @@ export function Wizard({ onExit }: WizardProps) {
       setFolio(result.folio)
       setSubmitted(true)
       localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(STEP_KEY)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
       toast.error('Error al enviar solicitud', {

@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { obtenerExpedientePorFolio, ejecutarAccion } from '@/lib/services/expediente-service'
 
 // ============================================================================
 // GET /api/expedientes/[folio]
 // Obtiene un expediente por folio (para portal cliente y admin)
+// - Admin: puede ver cualquier expediente
+// - Cliente: solo puede ver el expediente de su folio
 // ============================================================================
 
 export async function GET(
@@ -12,6 +16,35 @@ export async function GET(
 ) {
   try {
     const { folio } = await params
+
+    // Verificar sesión
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json(
+        { error: 'No autorizado — inicia sesión' },
+        { status: 401 }
+      )
+    }
+
+    const role = (session.user as any)?.role
+    const userFolio = (session.user as any)?.folio
+
+    // Cliente solo puede ver su propio expediente
+    if (role === 'CLIENTE' && userFolio !== folio.toUpperCase()) {
+      return NextResponse.json(
+        { error: 'No autorizado — solo puedes ver tu propio expediente' },
+        { status: 403 }
+      )
+    }
+
+    // Solo ADMIN o CLIENTE pueden acceder
+    if (role !== 'ADMIN' && role !== 'CLIENTE') {
+      return NextResponse.json(
+        { error: 'Rol no autorizado' },
+        { status: 403 }
+      )
+    }
+
     const expediente = await obtenerExpedientePorFolio(folio)
 
     if (!expediente) {

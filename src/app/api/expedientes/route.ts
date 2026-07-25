@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { crearExpedienteDesdeWizard, listarExpedientes } from '@/lib/services/expediente-service'
 import type { WizardData } from '@/components/wizard/types'
 import type { ExpedienteEstado } from '@prisma/client'
@@ -63,15 +65,21 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Verificar sesión de admin
+    const session = await getServerSession(authOptions)
+    if (!session || (session.user as any)?.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'No autorizado — se requiere sesión de administrador' },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const estado = searchParams.get('estado') as ExpedienteEstado | null
     const limite = parseInt(searchParams.get('limite') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // TODO: en producción, verificar sesión de admin aquí
-    // Por ahora, sin auth para poder probar
-
-    const filtros: any = { limite, offset }
+    const filtros: { limite: number; offset: number; estado?: ExpedienteEstado } = { limite, offset }
     if (estado) filtros.estado = estado
 
     const resultado = await listarExpedientes(filtros)

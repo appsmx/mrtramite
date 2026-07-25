@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { ejecutarAccion, getOrCreateSystemUser } from '@/lib/services/expediente-service'
 
 // ============================================================================
 // POST /api/expedientes/[folio]/accion
 // Ejecuta una acción del Motor de Acciones (DEC-011)
+// Solo ADMIN puede ejecutar acciones (excepto webhook MP que usa system user)
 // ============================================================================
 
 interface AccionRequestBody {
   codigoAccion: string // ej: 'ACC-002'
   ejecutadoPorId?: string // opcional, si no se provee usa system user
   metadata?: Record<string, any>
+  // Flag interno para webhook de MP (no requiere sesión admin)
+  _internal?: boolean
 }
 
 export async function POST(
@@ -27,8 +32,23 @@ export async function POST(
       )
     }
 
-    // En MVP sin auth, usamos system user si no se especifica
+    // Verificar sesión de admin (excepto para llamadas internas del webhook MP)
     let ejecutadoPorId = body.ejecutadoPorId
+    if (!body._internal) {
+      const session = await getServerSession(authOptions)
+      if (!session || (session.user as any)?.role !== 'ADMIN') {
+        return NextResponse.json(
+          { error: 'No autorizado — se requiere sesión de administrador' },
+          { status: 401 }
+        )
+      }
+      // Usar el ID del usuario autenticado si no se especifica
+      if (!ejecutadoPorId) {
+        ejecutadoPorId = (session.user as any).id
+      }
+    }
+
+    // Si sigue sin ejecutadoPorId, usar system user
     if (!ejecutadoPorId) {
       const systemUser = await getOrCreateSystemUser()
       ejecutadoPorId = systemUser.id
