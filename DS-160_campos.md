@@ -1,6 +1,6 @@
 # DS-160_campos.md
 
-**Versión:** 1.0
+**Versión:** 1.1
 **Estado:** Oficial
 **Propósito:** Catálogo completo de campos requeridos para llenar el formulario DS-160 (Visa Americana de turista). Autoridad del catálogo del módulo Visa bajo `[BIBLIA]` DEC-015. Cualquier IA o desarrollador que implemente el wizard de Visa debe derivar los campos desde este documento.
 **Fecha:** 2026-07-25
@@ -15,28 +15,30 @@
 |---|---|
 | Paso 1 | Selección de trámite (no aplica a DS-160) |
 | Paso 2 | Validación prerequisito: pasaporte vigente |
-| Paso 3 | Categorías 1, 2, 3, 4 (datos básicos + contacto) |
+| Paso 3 | Categorías 2, 3, 4, 5 (datos básicos + contacto) — sin datos del pasaporte |
 | Paso 4 | Categorías 6, 7, 8 (domicilio, estado civil, familia cercana, padres) |
 | Paso 5 | Categorías 9, 10 (familiares en EE.UU.) |
 | Paso 6 | Categoría 11 (información laboral) |
 | Paso 7 | Categoría 12 (información académica) |
 | Paso 8 | Categoría 13 (viajes y visas previas) |
-| Paso 9 | Carga de archivos (pasaporte, acta, foto, comprobante) |
+| Paso 9 | Carga de archivos (pasaporte, acta, foto, comprobante) — el sistema extrae automáticamente número/fechas del pasaporte |
 | Paso 10 | Revisión + consentimiento + envío |
 
 ---
 
 ## Catálogo completo de campos
 
-### Categoría 1 — Pasaporte (documento)
+### Categoría 1 — Pasaporte (extraído del documento, no capturado por el cliente)
 
-| Campo | Tipo | Obligatorio | Notas |
-|---|---|---|---|
-| Número de pasaporte | texto | Sí | |
-| Fecha de emisión | fecha | Sí | |
-| Fecha de expiración | fecha | Sí | Debe tener vigencia mínima 6 meses |
-| País emisor | texto | Sí | Default: México |
-| Archivo PDF/JPG | file | Sí | Página de datos del pasaporte |
+> **Principio DEC-017:** El cliente NO captura manualmente estos datos. Se extraen automáticamente del archivo del pasaporte subido en el paso 9 (vía OCR o por el gestor en el panel admin). Aquí se documentan los campos que **existirán en el sistema**, no que el cliente llenará.
+
+| Campo | Origen | Notas |
+|---|---|---|
+| Número de pasaporte | Extraído de la foto subida | Validado por el gestor en revisión |
+| Fecha de emisión | Extraído de la foto subida | |
+| Fecha de expiración | Extraído de la foto subida | Validar vigencia mínima 6 meses |
+| País emisor | Default: México | Default configurable |
+| Archivo PDF/JPG | Subido por el cliente en paso 9 | Página de datos del pasaporte |
 
 ### Categoría 2 — Teléfono
 
@@ -60,7 +62,7 @@
 | Usuario/Handle | texto | No | Sin contraseña |
 | Agregar otra red | repeat | No | Repetir par plataforma+usuario |
 
-### Categoría 5 — Datos personales (capturados en paso 3, junto con pasaporte)
+### Categoría 5 — Datos personales (capturados en paso 3)
 
 | Campo | Tipo | Obligatorio | Notas |
 |---|---|---|---|
@@ -266,8 +268,18 @@ Cuando se implemente el módulo Visa en código (`modules/visa.config.ts`), este
 
 > Pendiente de decisión (cuando se implemente): ¿los campos del DS-160 se almacenan como JSON en una sola columna `Expediente.ds160_data`, o se normalizan en tablas separadas (`Ds160DatosPersonales`, `Ds160Familia`, `Ds160Laboral`, etc.)? Recomendación inicial: JSON por simplicidad en MVP, normalización en fase 2 si se requiere reportes por campo.
 
+### Sobre la extracción de datos del pasaporte (DEC-017)
+
+El paso 9 (carga de documentos) incluye el pasaporte. Cuando el cliente sube la imagen del pasaporte:
+
+1. **MVP:** El sistema muestra el archivo en el panel admin. El gestor visualmente lee los datos y los captura en los campos correspondientes de Categoría 1 al ejecutar `ACC-002 Documentos aprobados`. No hay OCR automático.
+2. **Fase 2:** Se puede integrar OCR (VLM del z-ai-web-dev-sdk o Tesseract.js) para pre-llenar los campos automáticamente, dejando al gestor solo la validación. El gestor confirma o corrige.
+
+Esto elimina la fricción para el cliente (no transcribe lo que ya va a fotografiar) y mantiene el modelo de datos completo (DEC-011 Motor de Acciones registra quién validó los datos del pasaporte y cuándo).
+
 ---
 
 ## Historial de cambios
 
-- 2026-07-25: Versión inicial 1.0 basada en la lista proporcionada por el gestor.
+- 2026-07-25: Versión 1.0 basada en la lista proporcionada por el gestor.
+- 2026-07-25: Versión 1.1 — aplicado DEC-017 (no-duplicación documento-dato): Categoría 1 (datos del pasaporte) ya no se captura manualmente por el cliente; se extrae del archivo subido. Nota de OCR agregada en implementación técnica.

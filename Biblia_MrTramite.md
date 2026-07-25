@@ -1,6 +1,6 @@
 # Biblia_MrTramite.md
 
-**Versión:** 0.4
+**Versión:** 0.5
 **Estado:** En revisión
 **Propósito:** Capturar el conocimiento específico del producto Mr. Trámite —visión, usuarios, reglas de negocio, decisiones aprobadas, MVP, stack tecnológica, identidad visual e implicaciones de privacidad. Autoridad del producto (Nivel Proyecto bajo `[LOGAN]`). Cualquier IA que se incorpore al proyecto debe leer este documento antes de producir resultados.
 **Fecha:** 2026-07-25
@@ -231,6 +231,19 @@ Esto exige un **CRM unificado** que registre a todo cliente desde el primer cont
 - **Consecuencias:** El campo `Expediente.estado` es un enum con estos 10 valores. La UI muestra badges de color por estado. Las transiciones válidas se definen en una matriz (DEC-012).
 - **Fecha:** 2026-07-25
 
+### DEC-017: Principio de no-duplicación documento-dato
+
+- **Problema:** El wizard original pedía al cliente que transcribiera datos del pasaporte (número, fechas) que también iba a subir como fotografía. Esto genera fricción, errores de transcripción y duplicación de esfuerzo.
+- **Alternativas:** (a) Captura manual de todos los datos + subida de documentos, (b) Solo subida de documentos (sin captura manual), (c) Principio explícito: no pedir al cliente datos que ya proporciona como documento; extraerlos en backend.
+- **Decisión:** Adoptar el principio explícito: **no se pide al cliente que transcriba datos que ya va a proporcionar como documento**. Si un dato está en un documento que se sube, se extrae (vía OCR o por el gestor en el panel admin), no se captura manualmente por el cliente.
+- **Justificación:** Reduce fricción (Artículo III — simplicidad), reduce errores de transcripción (mejor calidad de datos), alineado con minimización LFPDPPP (Sección 11.2). El cliente ya tiene el documento en la mano; pedirle que lo transcriba es trabajo innecesario.
+- **Consecuencias:**
+  - Categoría 1 del DS-160 (datos del pasaporte) ya no se captura en el wizard; se extrae del archivo subido en paso 9.
+  - El gestor, al ejecutar `ACC-002 Documentos aprobados`, ve la foto del pasaporte en el panel admin y captura los datos del pasaporte (número, fechas) — o los confirma si en fase 2 se implementa OCR automático.
+  - `DS-160_campos.md` v1.1 refleja este cambio.
+  - **Principio aplicable a futuros módulos:** cada vez que un documento contenga datos que el sistema necesita, se extraen, no se piden al cliente.
+- **Fecha:** 2026-07-25
+
 ---
 
 ## 6. Filosofía del producto
@@ -336,16 +349,16 @@ La primera iteración del ciclo metodológico (`[LOGAN]` Sección 4.2) debe prod
 2. **Wizard de solicitud de trámite (cliente)** — 10 pasos (DEC-014):
    - Paso 1: Selección de tipo de trámite (solo Visa habilitada en MVP).
    - Paso 2: Validación de prerequisitos (pasaporte vigente).
-   - Paso 3: Datos personales básicos (nombre, CURP, contacto).
+   - Paso 3: Datos personales básicos (nombre, CURP, contacto, redes sociales). **Sin datos del pasaporte** — DEC-017.
    - Paso 4: Información personal extendida (domicilio, estado civil, familia cercana).
    - Paso 5: Familiares en EE.UU. (directos e indirectos).
    - Paso 6: Información laboral.
    - Paso 7: Información académica.
    - Paso 8: Viajes y visas previas.
-   - Paso 9: Carga de documentos (pasaporte, acta, foto, comprobante).
+   - Paso 9: Carga de documentos (pasaporte, acta, foto, comprobante). El gestor extrae los datos del pasaporte del archivo subido.
    - Paso 10: Revisión + consentimiento + envío.
    - Guardado progresivo (el cliente puede salir y volver).
-   - Catálogo completo de campos en `DS-160_campos.md` (DEC-015).
+   - Catálogo completo de campos en `DS-160_campos.md` v1.1 (DEC-015, DEC-017).
 
 3. **Panel de administración / CRM** (gestor, rol `ADMIN` en MVP — DEC-013):
    - **Vista de clientes** con expedientes anidados (DEC-009).

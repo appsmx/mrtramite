@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe v2 — Plantillas de email Mr. Trámite</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f0f0; padding: 20px; display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+  .email {
+    width: 480px; background: #fff; min-height: 600px; position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;
+    border: 1px solid #e0e0e0;
+  }
+  .wf-label { position: absolute; top: -28px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 600; color: #555; letter-spacing: 1px; text-transform: uppercase; }
+  .meta-bar { background: #f5f5f5; padding: 8px 16px; font-size: 10px; color: #666; border-bottom: 1px solid #eee; text-align: left; }
+  .meta-row { display: flex; gap: 6px; margin-bottom: 2px; }
+  .meta-label { color: #999; min-width: 50px; }
+  .meta-value { color: #555; font-weight: 500; }
+  .email-body { padding: 28px 28px; }
+  .email-logo { width: 70px; height: 30px; background: repeating-linear-gradient(45deg, #e0e0e0, #e0e0e0 8px, #d0d0d0 8px, #d0d0d0 16px); border-radius: 4px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #888; }
+  .email-hello { font-size: 14px; color: #333; margin-bottom: 14px; }
+  .email-text { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 14px; }
+  .email-info-card { background: #f9f9f9; border-left: 3px solid #999; padding: 12px 16px; margin: 16px 0; font-size: 12px; color: #555; line-height: 1.6; }
+  .email-info-row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .email-info-label { color: #888; }
+  .email-info-value { color: #333; font-weight: 500; }
+  .email-cta {
+    display: block; background: #999; color: #fff; font-weight: 600;
+    padding: 14px; text-align: center; border-radius: 4px; margin: 18px 0;
+    font-size: 13px;
+  }
+  .email-cta-hint { font-size: 10px; color: #888; text-align: center; margin-top: -8px; margin-bottom: 14px; }
+  .email-warning { background: #fff4e0; border: 1px solid #ffcc66; padding: 10px 14px; border-radius: 4px; font-size: 11px; color: #7a5400; margin: 14px 0; line-height: 1.5; }
+  .email-success { background: #e8f4e8; border: 1px solid #99cc99; padding: 10px 14px; border-radius: 4px; font-size: 11px; color: #336633; margin: 14px 0; line-height: 1.5; }
+  .email-footer { border-top: 1px solid #eee; padding: 16px 28px; font-size: 10px; color: #999; line-height: 1.5; }
+  .email-footer a { color: #1B4F72; }
+  .subject { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 14px; }
+  .small-note { font-size: 10px; color: #888; margin-top: 8px; font-style: italic; }
+  .step-tag { display: inline-block; padding: 2px 8px; background: #1B4F72; color: #fff; border-radius: 3px; font-size: 9px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<!-- PLANTILLA 1: Solicitud recibida (disparada al crear expediente) -->
+<div class="email">
+  <div class="wf-label">Email 1/4 — Solicitud recibida (al crear expediente)</div>
+  <div class="meta-bar">
+    <div class="meta-row"><span class="meta-label">Trigger:</span><span class="meta-value">Creación de expediente (automático)</span></div>
+    <div class="meta-row"><span class="meta-label">Acción:</span><span class="meta-value">—</span></div>
+    <div class="meta-row"><span class="meta-label">Asunto:</span><span class="meta-value">Hemos recibido tu solicitud de trámite ✓</span></div>
+  </div>
+  <div class="email-body">
+    <div class="email-logo">[LOGO Mr. Trámite]</div>
+    <div class="step-tag">ACC-001 · Documentos recibidos</div>
+    <div class="subject">Hemos recibido tu solicitud ✓</div>
+
+    <div class="email-hello">Hola Juan,</div>
+    <div class="email-text">
+      Hemos recibido tu solicitud de trámite de <strong>Visa Americana de turista</strong>. Mr. Trámite revisará tus documentos y la información que proporcionaste en las próximas 24-48 horas.
+    </div>
+
+    <div class="email-info-card">
+      <div class="email-info-row"><span class="email-info-label">Folio</span><span class="email-info-value">MRT-2026-0001</span></div>
+      <div class="email-info-row"><span class="email-info-label">Expediente</span><span class="email-info-value">EXP-001-VISA</span></div>
+      <div class="email-info-row"><span class="email-info-label">Trámite</span><span class="email-info-value">Visa Americana</span></div>
+      <div class="email-info-row"><span class="email-info-label">Estado actual</span><span class="email-info-value">EN REVISIÓN</span></div>
+    </div>
+
+    <div class="email-warning">
+      📌 <strong>Importante:</strong> No necesitas pagar nada todavía. Solo pagarás los <strong>$800 MXN</strong> una vez que confirmemos tu cita consular.
+    </div>
+
+    <div class="email-text">Puedes dar seguimiento a tu trámite en cualquier momento:</div>
+    <a class="email-cta">Ver mi expediente →</a>
+    <div class="email-cta-hint">Accede con tu correo y folio MRT-2026-0001</div>
+
+    <div class="email-text">Si tienes dudas, escríbenos por WhatsApp o Messenger. Estamos para ayudarte.</div>
+    <div class="small-note">— Mr. Trámite, tu gestor de confianza</div>
+  </div>
+  <div class="email-footer">
+    Mr. Trámite · Gestoría profesional<br>
+    WhatsApp · Messenger · Instagram<br>
+    <a href="#">Aviso de Privacidad</a> · <a href="#">Términos y condiciones</a><br>
+    <br>
+    © 2026 Mr. Trámite. Todos los derechos reservados.
+  </div>
+</div>
+
+<!-- PLANTILLA 2: Cita confirmada, listo para pagar (ACC-004) -->
+<div class="email">
+  <div class="wf-label">Email 2/4 — Cita confirmada, procede a pagar (ACC-004)</div>
+  <div class="meta-bar">
+    <div class="meta-row"><span class="meta-label">Trigger:</span><span class="meta-value">ACC-004 · Cita generada</span></div>
+    <div class="meta-row"><span class="meta-label">Estado:</span><span class="meta-value">EN_PROCESO → LISTO_PARA_PAGO</span></div>
+    <div class="meta-row"><span class="meta-label">Asunto:</span><span class="meta-value">Tu cita consular está lista — procede a pagar</span></div>
+  </div>
+  <div class="email-body">
+    <div class="email-logo">[LOGO Mr. Trámite]</div>
+    <div class="step-tag">ACC-004 · Cita generada</div>
+    <div class="subject">Tu cita consular está lista 📅</div>
+
+    <div class="email-hello">Hola Juan,</div>
+    <div class="email-text">
+      ¡Buenas noticias! Hemos generado tu cita consular. Estos son los detalles:
+    </div>
+
+    <div class="email-info-card">
+      <div class="email-info-row"><span class="email-info-label">Fecha</span><span class="email-info-value">15 de agosto 2026</span></div>
+      <div class="email-info-row"><span class="email-info-label">Hora</span><span class="email-info-value">10:00 AM</span></div>
+      <div class="email-info-row"><span class="email-info-label">Lugar</span><span class="email-info-value">Consulado EE.UU. CDMX</span></div>
+      <div class="email-info-row"><span class="email-info-label">Dirección</span><span class="email-info-value">Paseo de la Reforma 305</span></div>
+    </div>
+
+    <div class="email-text">
+      Ahora debes completar el pago de <strong>$800 MXN</strong> para confirmar la cita. Tienes hasta el <strong>1 de agosto de 2026</strong>.
+    </div>
+
+    <div class="email-warning">
+      ⚠️ <strong>Si no pagas antes de la fecha límite, la cita se cancelará</strong> y tendrás que iniciar un nuevo trámite.
+    </div>
+
+    <a class="email-cta">PAGAR $800 MXN →</a>
+    <div class="email-cta-hint">Pago seguro vía Mercado Pago · Tarjeta o transferencia SPEI</div>
+
+    <div class="email-text">
+      Una vez confirmado el pago, te enviaremos la confirmación y los documentos para tu cita.
+    </div>
+    <div class="small-note">— Mr. Trámite</div>
+  </div>
+  <div class="email-footer">
+    Mr. Trámite · Gestoría profesional<br>
+    ¿Dudas? Responde a este correo o escríbenos por WhatsApp.<br>
+    <a href="#">Aviso de Privacidad</a>
+  </div>
+</div>
+
+<!-- PLANTILLA 3: Pago confirmado (ACC-005, vía webhook Mercado Pago) -->
+<div class="email">
+  <div class="wf-label">Email 3/4 — Pago confirmado (ACC-005, automático)</div>
+  <div class="meta-bar">
+    <div class="meta-row"><span class="meta-label">Trigger:</span><span class="meta-value">Webhook Mercado Pago → ACC-005</span></div>
+    <div class="meta-row"><span class="meta-label">Estado:</span><span class="meta-value">LISTO_PARA_PAGO → PAGO_RECIBIDO</span></div>
+    <div class="meta-row"><span class="meta-label">Asunto:</span><span class="meta-value">Pago confirmado — tu trámite está en proceso final</span></div>
+  </div>
+  <div class="email-body">
+    <div class="email-logo">[LOGO Mr. Trámite]</div>
+    <div class="step-tag">ACC-005 · Pago confirmado</div>
+    <div class="subject">Pago confirmado ✓</div>
+
+    <div class="email-hello">Hola Juan,</div>
+    <div class="email-text">
+      Hemos recibido tu pago de <strong>$800 MXN</strong>. Tu trámite continúa su curso.
+    </div>
+
+    <div class="email-success">
+      ✅ <strong>Detalles del pago:</strong><br>
+      Folio: MP-1234567890<br>
+      Fecha: 2026-07-27 · 14:32<br>
+      Método: Mercado Pago (tarjeta)<br>
+      Estado: <strong>PAGO_RECIBIDO</strong>
+    </div>
+
+    <div class="email-info-card">
+      <div class="email-info-row"><span class="email-info-label">Expediente</span><span class="email-info-value">EXP-001-VISA</span></div>
+      <div class="email-info-row"><span class="email-info-label">Cita</span><span class="email-info-value">15 ago 2026 · 10:00</span></div>
+      <div class="email-info-row"><span class="email-info-label">Próximo paso</span><span class="email-info-value">Finalización del trámite</span></div>
+    </div>
+
+    <div class="email-text">
+      Mr. Trámite está preparando tus credenciales y documentos finales. Te avisaremos por correo cuando todo esté listo para descarga.
+    </div>
+
+    <a class="email-cta">Ver estado de mi expediente →</a>
+
+    <div class="small-note">— Mr. Trámite</div>
+  </div>
+  <div class="email-footer">
+    Mr. Trámite · Gestoría profesional<br>
+    Guarda este correo para tus registros.<br>
+    <a href="#">Aviso de Privacidad</a>
+  </div>
+</div>
+
+<!-- PLANTILLA 4: Trámite finalizado (ACC-006) -->
+<div class="email">
+  <div class="wf-label">Email 4/4 — Trámite finalizado (ACC-006)</div>
+  <div class="meta-bar">
+    <div class="meta-row"><span class="meta-label">Trigger:</span><span class="meta-value">ACC-006 · Trámite finalizado</span></div>
+    <div class="meta-row"><span class="meta-label">Estado:</span><span class="meta-value">PAGO_RECIBIDO → FINALIZADO</span></div>
+    <div class="meta-row"><span class="meta-label">Asunto:</span><span class="meta-value">Tu trámite está listo — descarga tus documentos</span></div>
+  </div>
+  <div class="email-body">
+    <div class="email-logo">[LOGO Mr. Trámite]</div>
+    <div class="step-tag">ACC-006 · Trámite finalizado</div>
+    <div class="subject">¡Tu trámite está listo! 🎉</div>
+
+    <div class="email-hello">Hola Juan,</div>
+    <div class="email-text">
+      Tu trámite de <strong>Visa Americana de turista</strong> ha sido finalizado exitosamente. Tu cita está confirmada y tus documentos están listos para descarga.
+    </div>
+
+    <div class="email-info-card">
+      <div class="email-info-row"><span class="email-info-label">Cita</span><span class="email-info-value">15 ago 2026 · 10:00 AM ✓</span></div>
+      <div class="email-info-row"><span class="email-info-label">Lugar</span><span class="email-info-value">Consulado EE.UU. CDMX</span></div>
+      <div class="email-info-row"><span class="email-info-label">Tipo visa</span><span class="email-info-value">B1/B2 (turista)</span></div>
+      <div class="email-info-row"><span class="email-info-label">Vigencia</span><span class="email-info-value">10 años</span></div>
+    </div>
+
+    <div class="email-text"><strong>Documentos para descargar:</strong></div>
+    <div style="background: #f9f9f9; padding: 12px 16px; border-radius: 4px; margin: 8px 0 14px; font-size: 11px; color: #555; line-height: 1.8;">
+      📄 Confirmación DS-160<br>
+      📄 Confirmación de cita consular<br>
+      📄 Hoja de instrucciones para tu cita<br>
+      📄 Comprobante fiscal
+    </div>
+
+    <a class="email-cta">DESCARGAR DOCUMENTOS →</a>
+
+    <div class="email-warning">
+      📌 <strong>Recuerda:</strong> Asiste a tu cita el <strong>15 de agosto a las 10:00 AM</strong>. Lleva la confirmación impresa y tu pasaporte vigente.
+    </div>
+
+    <div class="email-text">
+      Si quedaste satisfecho con el servicio, nos encantaría tu opinión. Tu testimonio ayuda a otras personas a confiar en Mr. Trámite.
+    </div>
+
+    <a class="email-cta" style="background: #fff; color: #1B4F72; border: 1.5px solid #1B4F72;">⭐ Calificar el servicio</a>
+
+    <div class="small-note">— Mr. Trámite, gracias por confiar en nosotros</div>
+  </div>
+  <div class="email-footer">
+    Mr. Trámite · Gestoría profesional<br>
+    ¿Necesitas otro trámite? <a href="#">Visita nuestra web</a><br>
+    <a href="#">Aviso de Privacidad</a> · <a href="#">Términos</a>
+  </div>
+</div>
+
+</body>
+</html>

@@ -15,15 +15,18 @@ Hay dos versiones de los wireframes:
 - `flujo-tramite-v2.html` — wizard de 10 pasos con captura estructurada DS-160 (DEC-014)
 - `admin-crm-v2.html` — panel admin con expedientes (DEC-009) + Motor de Acciones visible (DEC-011)
 
-La versión v2 refleja todas las decisiones aprobadas en `[BIBLIA]` v0.4 (DEC-009 a DEC-016).
+La versión v2 refleja todas las decisiones aprobadas en `[BIBLIA]` v0.5 (DEC-001 a DEC-017).
 
 ## Archivos actuales
 
 | Archivo | Descripción |
 |---|---|
 | `landing.html` | Landing page mobile-first (375px) — vigente |
-| `flujo-tramite-v2.html` | Wizard 10 pasos + pantalla post-envío (11 vistas en paralelo) |
+| `flujo-tramite-v2.html` | Wizard 10 pasos + pantalla post-envío (11 vistas en paralelo) — DEC-017 aplicada |
 | `admin-crm-v2.html` | Panel admin: lista expedientes + ficha + modal confirmar acción (3 vistas) |
+| `portal-cliente.html` | **NUEVO** Portal del cliente: login + dashboard por estado (5 vistas) |
+| `plantillas-email.html` | **NUEVO** 4 plantillas de email disparadas por Motor de Acciones |
+| `admin-modulos.html` | **NUEVO** Admin catálogo de módulos + edición de módulo Visa (2 vistas) |
 | `flujo-tramite.html` | (v1, deprecado) Wizard 5 pasos |
 | `admin-crm.html` | (v1, deprecado) Panel admin simple |
 | `README.md` | Este documento |
