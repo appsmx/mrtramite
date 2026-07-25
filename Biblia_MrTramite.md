@@ -1,6 +1,6 @@
 # Biblia_MrTramite.md
 
-**Versión:** 0.2
+**Versión:** 0.3
 **Estado:** En revisión
 **Propósito:** Capturar el conocimiento específico del producto Mr. Trámite —visión, usuarios, reglas de negocio, decisiones aprobadas, MVP, stack tecnológica, identidad visual e implicaciones de privacidad. Autoridad del producto (Nivel Proyecto bajo `[LOGAN]`). Cualquier IA que se incorpore al proyecto debe leer este documento antes de producir resultados.
 **Fecha:** 2026-07-25
@@ -259,9 +259,19 @@ La primera iteración del ciclo metodológico (`[LOGAN]` Sección 4.2) debe prod
 
 ## 9. Identidad visual
 
-### 9.1 Estado actual del logo
+### 9.1 Estado del logo
 
-Análisis del logo actual (realizado con VLM):
+**Logo actualizado y publicado** el 2026-07-25 (commit posterior). 3 versiones disponibles en `/branding/` del repo:
+
+| Archivo | Uso | Tamaño |
+|---|---|---|
+| `logo_vertical.png` | Versión principal — landing, redes sociales, perfil FB/IG | 864×1152 |
+| `logo_horizontal.png` | Headers de web, firmas de email | 1344×768 |
+| `logo_icon.png` | Favicon, avatar de app PWA, navbar | 1024×1024 |
+
+### 9.1.1 Análisis del logo original (referencia histórica)
+
+Análisis del logo original (realizado con VLM el 2026-07-25):
 
 - **Composición:** Vertical asimétrica — rostro (lentes + bigote) sobre rectángulo blanco con brazos flexibles y guantes.
 - **Elementos presentes:** ✅ Lentes (aviador, negros con reflejos), ✅ Bigote (handlebar, victoriano), ✅ Guantes (cartoon vintage, blanco con sombreado cross-hatching).
@@ -270,33 +280,30 @@ Análisis del logo actual (realizado con VLM):
 - **Colores actuales:** Negro `#000000`, blanco `#FFFFFF`, degradado gris `#E8E8E8 → #A0A0A0`.
 - **Estado profesional:** Parcialmente — concepto sólido pero ejecución con estética clipart. Contraste entre tipografía serif seria y guantes cartoon crea disonancia.
 
-### 9.2 Paleta propuesta
+### 9.2 Paleta de marca
 
 | Color | Hex | Uso |
 |---|---|---|
 | Negro principal | `#1A1A1A` | Contornos, texto (menos agresivo que `#000`) |
-| Blanco | `#FFFFFF` | Fondos, camisa |
-| Acento corbata | `#1B4F72` (azul petróleo) | Aprobado (DEC-008) — botones primarios, CTAs, elementos de confianza |
+| Blanco | `#FFFFFF` | Fondos, camisa, guantes |
+| Azul petróleo | `#1B4F72` | Aprobado (DEC-008) — corbata, botones primarios, CTAs, elementos de confianza |
 | Gris neutro | `#F5F5F5` | Fondos secundarios |
 
-### 9.3 Mejoras a ejecutar
+### 9.3 Mejoras ejecutadas (2026-07-25)
 
-1. **Añadir corbata** colgando del rectángulo-blanco (DEC-006).
-2. **Refinar guantes:** eliminar sombreado cartoon; pasar a estilo flat o minimalista.
-3. **Limpiar bigote:** curvas bezier más elegantes.
-4. **Estilizar lentes:** quitar reflejos plásticos o reducirlos.
-5. **Mejorar integración del rectángulo** con los brazos (que parezcan surgir orgánicamente).
-6. **Eliminar degradado gris** del fondo para uso oficial; transparente o blanco.
+1. ✅ **Añadida corbata** azul petróleo `#1B4F72` (DEC-006 + DEC-008).
+2. ✅ **Guantes refinados:** estilo flat, con puño visible, sin sombreado cartoon.
+3. ✅ **Estilo pictograma minimalista:** sin rostro realista, sin cabello, sin rasgos faciales — solo los accesorios + vestimenta flotando sobre fondo blanco.
+4. ✅ **Eliminado el degradado gris** del fondo — ahora blanco puro.
+5. ✅ **3 versiones producidas:** vertical, horizontal, icono.
 
-### 9.4 Versiones del logo a producir
+### 9.4 Pendientes de identidad visual
 
-1. **Versión principal:** Color completo, vertical (la actual).
-2. **Versión horizontal:** Texto a la derecha del personaje, para headers de web y firmas.
-3. **Versión monocromática:** Solo negro, para sellos/facturas.
-4. **Versión icono:** Solo rostro (lentes + bigote) para favicon y avatar de app.
-5. **Versión PWA:** 512x512 y 192x192 con maskable.
+- [ ] Versión monocromática (solo negro) para sellos y facturas.
+- [ ] Versión vectorial (.svg) para impresión de alta calidad — encargar a diseñador basándose en las versiones PNG publicadas.
+- [ ] Confirmar si el eslogan actual ("Si quieres solución…") se mantiene — no incluido en los logos nuevos.
 
-> **Resuelto (DEC-008):** Color de la corbata = azul petróleo `#1B4F72`.
+> Histórico: la decisión de color de corbata (DEC-008) fue resuelta el 2026-07-25 → azul petróleo `#1B4F72`.
 
 ---
 
@@ -362,12 +369,12 @@ Análisis del logo actual (realizado con VLM):
 
 ### Próximos pasos inmediatos
 
-1. ✅ Aprobar esta Biblia (v0.1 → v0.2 "En revisión").
+1. ✅ Aprobar esta Biblia (v0.1 → v0.2 → v0.3 "En revisión").
 2. ✅ Resolver decisiones pendientes (DEC-007 Mercado Pago, DEC-008 corbata azul petróleo).
 3. ✅ Subir Biblia al repo `appsmx/mrtramite`.
-4. → Pendiente: Pasar a `[estado:arquitectura]`: diseñar la estructura de la web + CRM y el schema de base de datos.
-5. → Pendiente: Producir versión actualizada del logo (con corbata azul petróleo).
-6. → Pendiente: Construir MVP (Fase 5 de `[LOGAN]`).
+4. ✅ Producir versión actualizada del logo (con corbata azul petróleo) — 3 versiones publicadas en `/branding/`.
+5. → Pendiente: Pasar a `[estado:arquitectura]`: diseñar la estructura de la web + CRM, schema de base de datos, y wireframes.
+6. → En progreso: Construir MVP (Fase 5 de `[LOGAN]`).
 
 ---
 
