@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe — Panel Admin / CRM Mr. Trámite</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f0f0; padding: 20px; display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+  .screen {
+    width: 1100px; background: #fff; min-height: 700px; position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;
+    display: flex;
+  }
+  .wf-label {
+    position: absolute; top: -28px; left: 0; right: 0; text-align: center;
+    font-size: 12px; font-weight: 600; color: #555; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .box {
+    background: #e8e8e8; border: 1.5px dashed #999; color: #555;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; font-size: 12px; padding: 10px; min-height: 36px;
+    border-radius: 4px;
+  }
+  .box-cta { background: #999; color: #fff; font-weight: 600; min-height: 40px; }
+  .box-secondary { background: #fff; color: #555; border: 1.5px solid #999; font-weight: 500; min-height: 38px; }
+  .box-logo { min-height: 36px; width: 60px; }
+
+  .sidebar { width: 220px; background: #fafafa; border-right: 1px solid #eee; padding: 16px 12px; flex-shrink: 0; }
+  .sidebar-section { font-size: 9px; text-transform: uppercase; color: #999; letter-spacing: 1px; padding: 12px 8px 6px; }
+  .sidebar-item { padding: 8px 10px; border-radius: 4px; font-size: 12px; color: #555; margin-bottom: 2px; text-align: left; display: flex; align-items: center; gap: 8px; }
+  .sidebar-item.active { background: #e8e8e8; color: #333; font-weight: 600; }
+  .sidebar-icon { width: 14px; height: 14px; background: #ccc; border-radius: 2px; flex-shrink: 0; }
+  .sidebar-badge { margin-left: auto; padding: 1px 6px; background: #999; color: #fff; border-radius: 8px; font-size: 10px; }
+
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .topbar { padding: 12px 20px; border-bottom: 1px solid #eee; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+  .breadcrumb { font-size: 12px; color: #888; }
+  .topbar-right { display: flex; gap: 8px; align-items: center; }
+  .search-box { background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 8px 12px; font-size: 12px; color: #999; min-width: 200px; }
+  .content { padding: 20px; flex: 1; overflow: auto; }
+  .page-title { font-size: 18px; font-weight: 700; color: #333; margin-bottom: 4px; }
+  .page-subtitle { font-size: 12px; color: #888; margin-bottom: 20px; }
+
+  .stats-row { display: flex; gap: 12px; margin-bottom: 24px; }
+  .stat-card { flex: 1; background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; padding: 14px; text-align: left; }
+  .stat-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 22px; font-weight: 700; color: #333; margin-top: 4px; }
+  .stat-trend { font-size: 10px; color: #558855; margin-top: 4px; }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .filter-tabs { display: flex; gap: 4px; }
+  .filter-tab { padding: 6px 12px; border-radius: 4px; font-size: 11px; background: #f5f5f5; color: #666; }
+  .filter-tab.active { background: #555; color: #fff; }
+
+  .table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .table th { text-align: left; padding: 10px; background: #f5f5f5; color: #666; font-weight: 600; font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #eee; }
+  .table td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; color: #444; }
+  .table tr:hover td { background: #fafafa; }
+  .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 500; }
+  .status-nuevo { background: #e3f2fd; color: #1976d2; }
+  .status-revision { background: #fff4e0; color: #cc8800; }
+  .status-cita { background: #e8f4e8; color: #336633; }
+  .status-pago { background: #ffe0e0; color: #cc3333; }
+  .status-pagado { background: #d4edda; color: #155724; }
+  .status-completado { background: #d0d0d0; color: #555; }
+  .channel-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 9px; background: #eee; color: #666; }
+
+  .client-detail { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  .detail-card { background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; padding: 16px; }
+  .detail-card h3 { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 12px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { color: #888; }
+  .detail-value { color: #333; font-weight: 500; }
+  .doc-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #fff; border: 1px solid #eee; border-radius: 4px; margin-bottom: 6px; font-size: 11px; }
+  .timeline-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 11px; color: #555; }
+  .timeline-dot { width: 8px; height: 8px; border-radius: 50%; background: #999; margin-top: 4px; flex-shrink: 0; }
+  .timeline-dot.done { background: #555; }
+  .timeline-dot.current { background: #cc8800; }
+
+  .modal-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 10; }
+  .modal { background: #fff; border-radius: 8px; padding: 24px; width: 480px; box-shadow: 0 8px 40px rgba(0,0,0,0.2); }
+  .modal-title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 4px; }
+  .modal-subtitle { font-size: 12px; color: #888; margin-bottom: 20px; }
+  .field-group { margin-bottom: 12px; text-align: left; }
+  .field-label { display: block; font-size: 10px; color: #666; margin-bottom: 4px; font-weight: 500; }
+  .field-input { background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 10px; font-size: 12px; color: #999; min-height: 38px; display: flex; align-items: center; }
+</style>
+</head>
+<body>
+
+<!-- VISTA 1: Lista de clientes -->
+<div class="screen">
+  <div class="wf-label">Panel Admin — Lista de clientes (CRM unificado)</div>
+
+  <div class="sidebar">
+    <div class="box box-logo" style="margin-bottom: 16px;">[LOGO]</div>
+    <div class="sidebar-section">Operación</div>
+    <div class="sidebar-item active"><div class="sidebar-icon"></div> Clientes <span class="sidebar-badge">12</span></div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Trámites</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Pagos</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Citas</div>
+    <div class="sidebar-section">Catálogos</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Tipos de trámite</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Precios</div>
+    <div class="sidebar-section">Sistema</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Ajustes</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Cerrar sesión</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb">Clientes / Lista</div>
+      <div class="topbar-right">
+        <div class="search-box">🔍 Buscar por nombre, CURP o folio...</div>
+        <div class="box box-cta" style="min-width: 140px;">+ Nuevo cliente</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-title">Clientes</div>
+      <div class="page-subtitle">CRM unificado — todos los canales en un solo lugar</div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total clientes</div>
+          <div class="stat-value">12</div>
+          <div class="stat-trend">↑ 3 esta semana</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">En revisión</div>
+          <div class="stat-value">2</div>
+          <div class="stat-trend">Acción requerida</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cita confirmada (pago pendiente)</div>
+          <div class="stat-value">1</div>
+          <div class="stat-trend">💰 $800 por cobrar</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Ingresos del mes</div>
+          <div class="stat-value">$2,400</div>
+          <div class="stat-trend">↑ 3 trámites completados</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="filter-tabs">
+          <div class="filter-tab active">Todos (12)</div>
+          <div class="filter-tab">Nuevos (2)</div>
+          <div class="filter-tab">En revisión (2)</div>
+          <div class="filter-tab">Cita lista (1)</div>
+          <div class="filter-tab">Pago pendiente (1)</div>
+          <div class="filter-tab">Completados (5)</div>
+        </div>
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Cliente</th>
+            <th>Trámite</th>
+            <th>Canal</th>
+            <th>Estado</th>
+            <th>Última actualización</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>MRT-2026-0012</td>
+            <td>María González<br><span style="color: #999; font-size: 10px;">55 1234 5678</span></td>
+            <td>Visa Americana</td>
+            <td><span class="channel-badge">Web</span></td>
+            <td><span class="status-badge status-nuevo">Nuevo</span></td>
+            <td>Hace 5 min</td>
+            <td><div class="box box-secondary" style="min-height: 30px; padding: 4px 12px; font-size: 11px;">Ver</div></td>
+          </tr>
+          <tr>
+            <td>MRT-2026-0011</td>
+            <td>Juan Pérez<br><span style="color: #999; font-size: 10px;">55 8765 4321</span></td>
+            <td>Visa Americana</td>
+            <td><span class="channel-badge">WhatsApp</span></td>
+            <td><span class="status-badge status-revision">En revisión</span></td>
+            <td>Hace 2 hrs</td>
+            <td><div class="box box-secondary" style="min-height: 30px; padding: 4px 12px; font-size: 11px;">Ver</div></td>
+          </tr>
+          <tr>
+            <td>MRT-2026-0010</td>
+            <td>Carlos Ruiz<br><span style="color: #999; font-size: 10px;">55 1111 2222</span></td>
+            <td>Visa Americana</td>
+            <td><span class="channel-badge">Messenger</span></td>
+            <td><span class="status-badge status-cita">Cita confirmada</span></td>
+            <td>Hace 1 día</td>
+            <td><div class="box box-cta" style="min-height: 30px; padding: 4px 12px; font-size: 11px;">Enviar pago</div></td>
+          </tr>
+          <tr>
+            <td>MRT-2026-0009</td>
+            <td>Ana López<br><span style="color: #999; font-size: 10px;">55 3333 4444</span></td>
+            <td>Pasaporte</td>
+            <td><span class="channel-badge">Instagram</span></td>
+            <td><span class="status-badge status-pago">Pago pendiente</span></td>
+            <td>Hace 2 días</td>
+            <td><div class="box box-secondary" style="min-height: 30px; padding: 4px 12px; font-size: 11px;">Ver</div></td>
+          </tr>
+          <tr>
+            <td>MRT-2026-0008</td>
+            <td>Pedro Martínez<br><span style="color: #999; font-size: 10px;">55 5555 6666</span></td>
+            <td>Visa Americana</td>
+            <td><span class="channel-badge">Web</span></td>
+            <td><span class="status-badge status-pagado">Pagado</span></td>
+            <td>Hace 3 días</td>
+            <td><div class="box box-secondary" style="min-height: 30px; padding: 4px 12px; font-size: 11px;">Ver</div></td>
+          </tr>
+          <tr>
+            <td>MRT-2026-0007</td>
+            <td>Laura Sánchez<br><span style="color: #999; font-size: 10px;">55 7777 8888</span></td>
+            <td>Visa Americana</td>
+            <td><span class="channel-badge">WhatsApp</span></td>
+            <td><span class="status-badge status-completado">Completado</span></td>
+            <td>Hace 5 días</td>
+            <td><div class="box box-secondary" style="min-height: 30px; padding: 4px 12px; font-size: 11px;">Ver</div></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top: 12px; font-size: 10px; color: #888; text-align: center;">
+        Mostrando 6 de 12 clientes · <u>Ver todos</u>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VISTA 2: Ficha de cliente -->
+<div class="screen">
+  <div class="wf-label">Panel Admin — Ficha de cliente (detalle)</div>
+
+  <div class="sidebar">
+    <div class="box box-logo" style="margin-bottom: 16px;">[LOGO]</div>
+    <div class="sidebar-section">Operación</div>
+    <div class="sidebar-item active"><div class="sidebar-icon"></div> Clientes <span class="sidebar-badge">12</span></div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Trámites</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Pagos</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Citas</div>
+    <div class="sidebar-section">Catálogos</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Tipos de trámite</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Precios</div>
+    <div class="sidebar-section">Sistema</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Ajustes</div>
+    <div class="sidebar-item"><div class="sidebar-icon"></div> Cerrar sesión</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb">Clientes / <strong>MRT-2026-0010</strong></div>
+      <div class="topbar-right">
+        <div class="box box-secondary" style="min-width: 100px;">← Volver</div>
+        <div class="box box-cta" style="min-width: 160px;">Confirmar y enviar pago</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-title">Carlos Ruiz</div>
+      <div class="page-subtitle">
+        Folio MRT-2026-0010 · Visa Americana · Canal: Messenger · Estado: <span class="status-badge status-cita">Cita confirmada</span>
+      </div>
+
+      <div class="client-detail">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="detail-card">
+            <h3>📋 Datos del solicitante</h3>
+            <div class="detail-row"><span class="detail-label">Nombre completo</span><span class="detail-value">Carlos Ruiz Martínez</span></div>
+            <div class="detail-row"><span class="detail-label">CURP</span><span class="detail-value">RUMC880215HDFXXX</span></div>
+            <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">carlos@example.com</span></div>
+            <div class="detail-row"><span class="detail-label">Teléfono / WhatsApp</span><span class="detail-value">55 1111 2222</span></div>
+            <div class="detail-row"><span class="detail-label">Canal de preferencia</span><span class="detail-value">Messenger</span></div>
+            <div class="detail-row"><span class="detail-label">Fecha de solicitud</span><span class="detail-value">2026-07-23</span></div>
+          </div>
+
+          <div class="detail-card">
+            <h3>📎 Documentos</h3>
+            <div class="doc-item"><span>📄 pasaporte_carlos.pdf</span><span style="color: #558855;">✓ Válido</span></div>
+            <div class="doc-item"><span>📄 acta_nacimiento.pdf</span><span style="color: #558855;">✓ Válido</span></div>
+            <div class="doc-item"><span>📷 foto_pasaporte.jpg</span><span style="color: #558855;">✓ Válido</span></div>
+            <div class="box box-secondary" style="margin-top: 8px; font-size: 11px;">+ Agregar documento</div>
+          </div>
+
+          <div class="detail-card">
+            <h3>💳 Detalle de pago</h3>
+            <div class="detail-row"><span class="detail-label">Trámite</span><span class="detail-value">Visa Americana</span></div>
+            <div class="detail-row"><span class="detail-label">Costo</span><span class="detail-value" style="color: #1B4F72; font-weight: 700;">$800 MXN</span></div>
+            <div class="detail-row"><span class="detail-label">Método</span><span class="detail-value">Mercado Pago (link)</span></div>
+            <div class="detail-row"><span class="detail-label">Estado pago</span><span class="detail-value" style="color: #cc3333;">Pendiente (enviar link)</span></div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="detail-card">
+            <h3>📍 Estado del trámite</h3>
+            <div class="timeline-item">
+              <div class="timeline-dot done"></div>
+              <div><strong>Solicitud recibida</strong><br><span style="color: #999; font-size: 10px;">2026-07-23 · 10:15</span></div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot done"></div>
+              <div><strong>Documentos validados</strong><br><span style="color: #999; font-size: 10px;">2026-07-23 · 14:30</span></div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot done"></div>
+              <div><strong>DS-160 llenado</strong><br><span style="color: #999; font-size: 10px;">2026-07-24 · 09:00</span></div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot done"></div>
+              <div><strong>Cita generada</strong><br><span style="color: #999; font-size: 10px;">2026-07-24 · 11:20</span><br><span style="color: #555;">📅 15 ago 2026 · 10:00 · Consulado CDMX</span></div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot current"></div>
+              <div><strong>Esperando pago</strong><br><span style="color: #999; font-size: 10px;">Acción: generar y enviar link de pago</span></div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div><strong style="color: #999;">Pago confirmado</strong><br><span style="color: #999; font-size: 10px;">Pendiente</span></div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div><strong style="color: #999;">Trámite completado</strong><br><span style="color: #999; font-size: 10px;">Pendiente</span></div>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <h3>⚙️ Acciones</h3>
+            <div class="box box-cta" style="margin-bottom: 8px;">Confirmar y enviar link de pago</div>
+            <div class="box box-secondary" style="margin-bottom: 8px;">Enviar mensaje al cliente</div>
+            <div class="box box-secondary" style="margin-bottom: 8px;">Editar datos</div>
+            <div class="box box-secondary" style="color: #cc3333; border-color: #cc3333;">Cancelar trámite</div>
+          </div>
+
+          <div class="detail-card" style="background: #fff8e0; border-color: #ffcc66;">
+            <h3 style="color: #7a5400;">⚠️ Políticas aplicables</h3>
+            <div style="font-size: 11px; color: #555; line-height: 1.6; text-align: left;">
+              • Si el cliente no paga: <strong>cita se cancela</strong>.<br>
+              • Si paga y luego detecta errores en sus docs: <strong>$300 MXN</strong> por nueva cita.<br>
+              • Si la cita se cancela por causa externa: <strong>50% del costo</strong> por gestión de nueva cita.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VISTA 3: Modal "Nuevo cliente externo" -->
+<div class="screen" style="height: 540px;">
+  <div class="wf-label">Panel Admin — Modal: Nuevo cliente externo (registro manual)</div>
+
+  <div style="position: relative; width: 100%; height: 100%; background: #888; opacity: 0.3;"></div>
+
+  <div class="modal-overlay" style="position: absolute;">
+    <div class="modal">
+      <div class="modal-title">+ Nuevo cliente externo</div>
+      <div class="modal-subtitle">Para clientes que llegaron por WhatsApp, Messenger o Instagram y no pasaron por la web.</div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="field-group">
+          <label class="field-label">Nombre completo *</label>
+          <div class="field-input">[ Input ]</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">CURP</label>
+          <div class="field-input">[ Opcional ]</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Teléfono / WhatsApp</label>
+          <div class="field-input">[ +52 ]</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Email</label>
+          <div class="field-input">[ Opcional ]</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Canal de llegada *</label>
+          <div class="field-input">[ WhatsApp / Messenger / Instagram ]</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Trámite solicitado *</label>
+          <div class="field-input">[ Visa / Pasaporte / ... ]</div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Notas internas</label>
+        <div class="field-input" style="min-height: 60px; align-items: flex-start;">[ Texto del primer mensaje del cliente, contexto, etc. ]</div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Documentos (subir después)</label>
+        <div style="font-size: 10px; color: #888;">Se pueden agregar documentos después de crear el cliente, desde su ficha.</div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 20px;">
+        <div class="box box-secondary" style="flex: 1;">Cancelar</div>
+        <div class="box box-cta" style="flex: 1;">Crear cliente</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

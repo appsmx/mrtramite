@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe — Landing Mr. Trámite</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f0f0; padding: 20px; display: flex; justify-content: center; }
+  .phone {
+    width: 375px; background: #fff; min-height: 800px; position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;
+  }
+  .wf-label {
+    position: absolute; top: -28px; left: 0; right: 0; text-align: center;
+    font-size: 12px; font-weight: 600; color: #555; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .box {
+    background: #e8e8e8; border: 1.5px dashed #999; color: #555;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; font-size: 12px; padding: 12px; min-height: 40px;
+    border-radius: 4px;
+  }
+  .box-img { background: repeating-linear-gradient(45deg, #e0e0e0, #e0e0e0 10px, #d0d0d0 10px, #d0d0d0 20px); min-height: 100px; }
+  .box-logo { min-height: 50px; width: 80px; }
+  .box-cta { background: #999; color: #fff; font-weight: 600; min-height: 48px; }
+  .box-step { background: #ddd; min-height: 80px; flex: 1; }
+  .box-card { background: #f5f5f5; min-height: 120px; flex: 1; flex-direction: column; gap: 8px; }
+  .box-tag { display: inline-block; padding: 4px 8px; background: #ccc; border-radius: 3px; font-size: 10px; }
+  .section { padding: 20px 16px; border-bottom: 1px solid #eee; }
+  .section-title { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 12px; }
+  .section-subtitle { font-size: 12px; color: #777; margin-bottom: 16px; }
+  .row { display: flex; gap: 8px; }
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border-bottom: 1px solid #eee; background: #fafafa;
+  }
+  .hero {
+    padding: 32px 16px; text-align: center; background: #f9f9f9;
+  }
+  .hero-title { font-size: 20px; font-weight: 700; color: #333; margin-bottom: 8px; }
+  .hero-subtitle { font-size: 13px; color: #666; margin-bottom: 20px; }
+  .trust-badge {
+    display: inline-block; padding: 6px 12px; background: #e0e0e0; border-radius: 20px;
+    font-size: 11px; color: #333; margin-bottom: 16px;
+  }
+  .step-row { display: flex; gap: 8px; }
+  .trust-row { display: flex; gap: 8px; flex-direction: column; }
+  .trust-item { background: #f5f5f5; padding: 12px; border-radius: 4px; display: flex; gap: 12px; align-items: flex-start; }
+  .trust-icon { width: 32px; height: 32px; background: #ddd; border-radius: 50%; flex-shrink: 0; }
+  .trust-text { font-size: 11px; color: #555; text-align: left; }
+  .footer { padding: 20px 16px; background: #2a2a2a; }
+  .footer .box { background: #444; color: #aaa; border-color: #555; margin-bottom: 8px; }
+  .price-tag { font-size: 14px; font-weight: 700; color: #333; }
+  .nav-menu { display: flex; gap: 6px; }
+  .nav-item { width: 24px; height: 4px; background: #999; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="wf-label">Landing — Mobile 375px — Baja fidelidad</div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="box box-logo">[LOGO H]</div>
+    <div class="nav-menu">
+      <div class="nav-item"></div>
+      <div class="nav-item"></div>
+      <div class="nav-item"></div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="trust-badge">🛡️ No pagas hasta tener tu cita confirmada</div>
+    <div class="hero-title">Gestiona tus trámites sin perder tiempo</div>
+    <div class="hero-subtitle">Visa americana, pasaporte, licencia, INE y más. Mr. Trámite se encarga de todo.</div>
+    <div class="box box-cta" style="margin-top: 16px;">INICIAR TRÁMITE →</div>
+  </div>
+
+  <!-- CÓMO FUNCIONA -->
+  <div class="section">
+    <div class="section-title">Cómo funciona</div>
+    <div class="section-subtitle">3 pasos simples</div>
+    <div class="step-row">
+      <div class="box box-step">1.<br>Selecciona<br>tu trámite</div>
+      <div class="box box-step">2.<br>Sube tus<br>documentos</div>
+      <div class="box box-step">3.<br>Paga cuando<br>confirme tu cita</div>
+    </div>
+  </div>
+
+  <!-- TRÁMITES -->
+  <div class="section">
+    <div class="section-title">Trámites disponibles</div>
+    <div class="section-subtitle">Precios claros, sin sorpresas</div>
+    <div class="row" style="margin-bottom: 8px;">
+      <div class="box box-card">
+        <strong>Visa Americana</strong>
+        <span class="price-tag">$800 MXN</span>
+        <span class="box-tag">Más solicitado</span>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom: 8px;">
+      <div class="box box-card">
+        <strong>Pasaporte Mexicano</strong>
+        <span class="price-tag">$ Por definir</span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="box box-card">
+        <strong>Licencia / INE</strong>
+        <span class="price-tag">$ Por definir</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- POR QUÉ CONFIAR -->
+  <div class="section">
+    <div class="section-title">Por qué confiar en Mr. Trámite</div>
+    <div class="trust-row">
+      <div class="trust-item">
+        <div class="trust-icon"></div>
+        <div class="trust-text"><strong>Pago post-confirmación</strong><br>No arriesgas tu dinero. Pagas solo cuando ves tu cita lista.</div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon"></div>
+        <div class="trust-text"><strong>Trazabilidad total</strong><br>Recibes confirmación de cada paso del proceso.</div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon"></div>
+        <div class="trust-text"><strong>Datos protegidos</strong><br>Tus documentos se manejan bajo estricta confidencialidad (LFPDPPP).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TESTIMONIOS -->
+  <div class="section">
+    <div class="section-title">Testimonios</div>
+    <div class="box box-img" style="min-height: 80px;">[Sección vacía en MVP — placeholder para cuando haya clientes]</div>
+  </div>
+
+  <!-- CTA FINAL -->
+  <div class="section" style="text-align: center;">
+    <div class="section-title">¿Listo para empezar?</div>
+    <div class="box box-cta">INICIAR MI TRÁMITE</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="box">[CONTACTO] WhatsApp · Messenger · Instagram</div>
+    <div class="box">[AVISO DE PRIVACIDAD] — LFPDPPP</div>
+    <div class="box">[TÉRMINOS Y CONDICIONES]</div>
+    <div class="box">© 2026 Mr. Trámite</div>
+  </div>
+</div>
+
+</body>
+</html>
