@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { ejecutarAccion } from '@/lib/services/expediente-service'
 import { logger } from '@/lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 // ============================================================================
 // POST /api/mercado-pago/webhook
@@ -10,6 +11,10 @@ import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 60 webhooks por minuto (MP puede enviar muchos)
+    const rateLimitResponse = applyRateLimit(request, 'WEBHOOK_MP')
+    if (rateLimitResponse) return rateLimitResponse
+
     const body = await request.json()
     logger.debug('Webhook Mercado Pago recibido', { body })
 

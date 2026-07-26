@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { crearExpedienteDesdeWizard, listarExpedientes } from '@/lib/services/expediente-service'
 import { logger } from '@/lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 import type { WizardData } from '@/components/wizard/types'
 import type { ExpedienteEstado } from '@prisma/client'
 
@@ -13,6 +14,10 @@ import type { ExpedienteEstado } from '@prisma/client'
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 5 creaciones por minuto por IP
+    const rateLimitResponse = applyRateLimit(request, 'CREATE_EXPEDIENTE')
+    if (rateLimitResponse) return rateLimitResponse
+
     const body = await request.json()
     const wizardData = body as WizardData
 

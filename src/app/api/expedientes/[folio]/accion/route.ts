@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { ejecutarAccion, getOrCreateSystemUser } from '@/lib/services/expediente-service'
 import { logger } from '@/lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 // ============================================================================
 // POST /api/expedientes/[folio]/accion
@@ -25,6 +26,10 @@ export async function POST(
   let folio = ''
   let codigoAccion = ''
   try {
+    // Rate limiting: 30 acciones por minuto por IP
+    const rateLimitResponse = applyRateLimit(request, 'EJECUTAR_ACCION')
+    if (rateLimitResponse) return rateLimitResponse
+
     const paramsResolved = await params
     folio = paramsResolved.folio
     const body: AccionRequestBody = await request.json()
