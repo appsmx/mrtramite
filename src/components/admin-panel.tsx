@@ -169,7 +169,7 @@ export function AdminPanel() {
     if (status === 'loading') return
     if (!session || (session.user as any)?.role !== 'ADMIN') {
       toast.error('Acceso denegado', { description: 'Necesitas ser administrador' })
-      router.refresh()
+      router.push('/')
     }
   }, [session, status, router])
 
@@ -277,7 +277,7 @@ export function AdminPanel() {
             <p className="text-sm text-muted-foreground mt-1">
               Necesitas iniciar sesión como administrador para acceder al panel.
             </p>
-            <Button onClick={() => router.refresh()} className="mt-4 bg-primary text-primary-foreground">
+            <Button onClick={() => router.push('/')} className="mt-4 bg-primary text-primary-foreground">
               Volver al inicio
             </Button>
           </CardContent>

@@ -22,11 +22,15 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ folio: string }> }
 ) {
+  let folio = ''
+  let codigoAccion = ''
   try {
-    const { folio } = await params
+    const paramsResolved = await params
+    folio = paramsResolved.folio
     const body: AccionRequestBody = await request.json()
+    codigoAccion = body.codigoAccion
 
-    if (!body.codigoAccion) {
+    if (!codigoAccion) {
       return NextResponse.json(
         { error: 'codigoAccion es requerido' },
         { status: 400 }
@@ -57,7 +61,7 @@ export async function POST(
 
     const resultado = await ejecutarAccion({
       folio,
-      codigoAccion: body.codigoAccion,
+      codigoAccion,
       ejecutadoPorId,
       metadata: body.metadata,
     })
@@ -86,7 +90,7 @@ export async function POST(
         : null,
     })
   } catch (error) {
-    logger.error('Error ejecutando acción', { folio, codigoAccion: body?.codigoAccion, error: error instanceof Error ? error.message : String(error) })
+    logger.error('Error ejecutando acción', { folio, codigoAccion, error: error instanceof Error ? error.message : String(error) })
 
     // Errores de validación (precondiciones, transiciones inválidas)
     if (error instanceof Error) {

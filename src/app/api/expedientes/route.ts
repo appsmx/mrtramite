@@ -24,6 +24,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(wizardData.email)) {
+      return NextResponse.json(
+        { error: 'El formato del email no es válido' },
+        { status: 400 }
+      )
+    }
+
+    // Validar formato de CURP (18 caracteres alfanuméricos)
+    if (!/^[A-Z0-9]{18}$/i.test(wizardData.curp)) {
+      return NextResponse.json(
+        { error: 'El CURP debe tener exactamente 18 caracteres alfanuméricos' },
+        { status: 400 }
+      )
+    }
+
     if (!wizardData.aceptaAvisoPrivacidad || !wizardData.aceptaTerminos) {
       return NextResponse.json(
         { error: 'Debe aceptar el aviso de privacidad y los términos' },

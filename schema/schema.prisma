@@ -182,6 +182,7 @@ model Documento {
 
   @@index([expedienteId])
   @@index([tipo])
+  @@unique([expedienteId, tipo]) // Un expediente no puede tener duplicados del mismo tipo
 }
 
 enum DocumentoTipo {

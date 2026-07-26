@@ -102,7 +102,7 @@ export function ClientePortal() {
     if (status === 'loading') return
     if (!session || (session.user as any)?.role !== 'CLIENTE' || !folio) {
       toast.error('Acceso denegado')
-      router.refresh()
+      router.push('/')
     }
   }, [session, status, folio, router])
 
@@ -149,7 +149,7 @@ export function ClientePortal() {
             <p className="text-sm text-muted-foreground mt-1">
               Necesitas iniciar sesión como cliente con tu folio.
             </p>
-            <Button onClick={() => router.refresh()} className="mt-4 bg-primary text-primary-foreground">
+            <Button onClick={() => router.push('/')} className="mt-4 bg-primary text-primary-foreground">
               Volver al inicio
             </Button>
           </CardContent>
