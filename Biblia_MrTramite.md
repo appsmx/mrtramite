@@ -570,9 +570,11 @@ Análisis del logo original (realizado con VLM el 2026-07-25):
 
 - `[estado:construcción]` — MVP funcional implementado y verificado end-to-end.
 - **Avance real actual:** MVP completo (landing + wizard + APIs + auth + panel admin + portal cliente). Flujo core verificado: cliente crea expediente → admin gestiona con Motor de Acciones → cliente ve avance.
-- **Repo documentación:** https://github.com/appsmx/mrtramite (Biblia, DS-160 catalog, branding, wireframes, schema, código fuente de referencia).
+- **Repo documentación:** https://github.com/appsmx/mrtramite (Biblia, DS-160 catalog, branding, wireframes, schema). Solo documentación — el código fuente vive en el proyecto Next.js activo.
 
 ### Componentes del MVP implementados
+
+> **Nota:** Las rutas en la columna "Archivo" se refieren al proyecto Next.js activo, no a este repo de documentación. Este repo contiene solo documentación (Biblia, schema, wireframes, branding).
 
 | Componente | Estado | Archivo |
 |---|---|---|
