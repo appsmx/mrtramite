@@ -77,6 +77,11 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
+        // Bloquear acceso a expedientes cancelados o archivados
+        if (expediente.estado === 'CANCELADO' || expediente.estado === 'ARCHIVADO') {
+          return null
+        }
+
         // Validar que el email coincide con el del cliente
         if (
           !expediente.cliente.email ||

@@ -74,7 +74,27 @@ export function Wizard({ onExit }: WizardProps) {
   }
 
   // Subir documento (usa updater para evitar race conditions)
+  // Valida tamaño máximo (10MB) y tipo de archivo
   const addDocumento = (tipo: string, file: File) => {
+    // Validar tamaño (10MB = 10 * 1024 * 1024 bytes)
+    const MAX_SIZE = 10 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      toast.error('Archivo demasiado grande', {
+        description: `El archivo "${file.name}" excede el límite de 10MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(1)}MB`,
+      })
+      return
+    }
+
+    // Validar tipo de archivo
+    const extPermitidas = ['.pdf', '.jpg', '.jpeg', '.png']
+    const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
+    if (!extPermitidas.includes(ext)) {
+      toast.error('Tipo de archivo no permitido', {
+        description: `Solo se aceptan archivos PDF, JPG o PNG. Archivo: ${file.name}`,
+      })
+      return
+    }
+
     setData((prev) => {
       const existing = prev.documentos.filter((d) => d.tipo !== tipo)
       return {

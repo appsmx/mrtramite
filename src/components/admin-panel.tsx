@@ -173,7 +173,7 @@ export function AdminPanel() {
     }
   }, [session, status, router])
 
-  // Cargar expedientes
+  // Cargar expedientes (con flag de mounted para evitar set state en componente desmontado)
   const cargarExpedientes = useCallback(async () => {
     setLoading(true)
     try {
@@ -192,7 +192,11 @@ export function AdminPanel() {
 
   useEffect(() => {
     if (session && (session.user as any)?.role === 'ADMIN') {
-      cargarExpedientes()
+      let cancelled = false
+      cargarExpedientes().then(() => {
+        if (cancelled) return
+      })
+      return () => { cancelled = true }
     }
   }, [session, cargarExpedientes])
 

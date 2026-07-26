@@ -8,14 +8,13 @@ import { applyRateLimit } from '@/lib/rate-limit'
 // ============================================================================
 // POST /api/expedientes/[folio]/accion
 // Ejecuta una acción del Motor de Acciones (DEC-011)
-// Solo ADMIN puede ejecutar acciones (excepto webhook MP que usa system user)
+// Solo ADMIN puede ejecutar acciones (excepto webhook MP que usa _internal)
 // ============================================================================
 
 interface AccionRequestBody {
-  codigoAccion: string // ej: 'ACC-002'
-  ejecutadoPorId?: string // opcional, si no se provee usa system user
+  codigoAccion: string
+  ejecutadoPorId?: string
   metadata?: Record<string, any>
-  // Flag interno para webhook de MP (no requiere sesión admin)
   _internal?: boolean
 }
 
@@ -52,7 +51,6 @@ export async function POST(
           { status: 401 }
         )
       }
-      // Usar el ID del usuario autenticado si no se especifica
       if (!ejecutadoPorId) {
         ejecutadoPorId = (session.user as any).id
       }
@@ -97,7 +95,6 @@ export async function POST(
   } catch (error) {
     logger.error('Error ejecutando acción', { folio, codigoAccion, error: error instanceof Error ? error.message : String(error) })
 
-    // Errores de validación (precondiciones, transiciones inválidas)
     if (error instanceof Error) {
       if (error.message.includes('no permitida') || error.message.includes('Faltan') || error.message.includes('requiere')) {
         return NextResponse.json(

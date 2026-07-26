@@ -1,7 +1,6 @@
 import { db } from '@/lib/db'
 import { generarFolio } from './folio'
 import { logger } from '@/lib/logger'
-import { Prisma } from '@prisma/client'
 import type { ExpedienteEstado } from '@prisma/client'
 import type { WizardData } from '@/components/wizard/types'
 
@@ -99,52 +98,63 @@ export async function crearExpedienteDesdeWizard({ wizardData, adminUserId }: Cr
     })
   }
 
-  // 2. Buscar el tipo de trámite (Visa por defecto)
+  // 2. Buscar el tipo de trámite (Visa por defecto) — debe estar activo
   const tramiteTipo = await db.tramiteTipo.findFirst({
     where: { codigo: wizardData.tramiteCodigo || 'VISA' },
   })
   if (!tramiteTipo) {
     throw new Error('Tipo de trámite no encontrado: ' + wizardData.tramiteCodigo)
   }
+  if (!tramiteTipo.activo) {
+    throw new Error('Este tipo de trámite no está disponible actualmente')
+  }
 
-  // 3. Crear expediente
-  const expediente = await db.expediente.create({
-    data: {
-      folio,
-      clienteId: cliente.id,
-      tramiteTipoId: tramiteTipo.id,
-      estado: 'NUEVO',
-      ds160Data: JSON.stringify(wizardData),
-      asignadoAId: adminUserId,
-    },
-  })
+  // 3. Crear expediente + acción + notificación en transacción
+  const systemUser = adminUserId ? null : await getOrCreateSystemUser()
 
-  // 4. Crear acción de auditoría (SYSTEM-INIT)
-  const accionInit = await db.accion.create({
-    data: {
-      expedienteId: expediente.id,
-      codigo: 'SYSTEM-INIT',
-      descripcion: 'Expediente creado vía wizard',
-      ejecutadoPorId: adminUserId || (await getOrCreateSystemUser()).id,
-      estadoPrevio: 'NUEVO',
-      estadoNuevo: 'NUEVO',
-      metadataJson: JSON.stringify({ origen: 'wizard', timestamp: new Date().toISOString() }),
-    },
-  })
-
-  // 5. Crear notificación SOLICITUD_RECIBIDA + enviar email
-  let notificacion = null
-  if (cliente.email) {
-    notificacion = await db.notificacion.create({
+  const resultado = await db.$transaction(async (tx) => {
+    const expediente = await tx.expediente.create({
       data: {
-        expedienteId: expediente.id,
-        tipo: 'SOLICITUD_RECIBIDA',
-        emailDestino: cliente.email,
-        asunto: getAsuntoNotificacion('SOLICITUD_RECIBIDA', folio),
+        folio,
+        clienteId: cliente.id,
+        tramiteTipoId: tramiteTipo.id,
+        estado: 'NUEVO',
+        ds160Data: JSON.stringify(wizardData),
+        asignadoAId: adminUserId,
       },
     })
 
-    // Enviar email (no bloquea la creación)
+    // Crear acción de auditoría (SYSTEM-INIT)
+    const accionInit = await tx.accion.create({
+      data: {
+        expedienteId: expediente.id,
+        codigo: 'SYSTEM-INIT',
+        descripcion: 'Expediente creado vía wizard',
+        ejecutadoPorId: adminUserId || (systemUser?.id ?? ''),
+        estadoPrevio: 'NUEVO',
+        estadoNuevo: 'NUEVO',
+        metadataJson: JSON.stringify({ origen: 'wizard', timestamp: new Date().toISOString() }),
+      },
+    })
+
+    // Crear notificación SOLICITUD_RECIBIDA
+    let notificacion = null
+    if (cliente.email) {
+      notificacion = await tx.notificacion.create({
+        data: {
+          expedienteId: expediente.id,
+          tipo: 'SOLICITUD_RECIBIDA',
+          emailDestino: cliente.email,
+          asunto: getAsuntoNotificacion('SOLICITUD_RECIBIDA', folio),
+        },
+      })
+    }
+
+    return { expediente, accionInit, notificacion }
+  })
+
+  // 4. Enviar email de SOLICITUD_RECIBIDA (fuera de la transacción)
+  if (resultado.notificacion && cliente.email) {
     try {
       const { enviarEmail } = await import('./email-service')
       const emailResult = await enviarEmail({
@@ -156,7 +166,7 @@ export async function crearExpedienteDesdeWizard({ wizardData, adminUserId }: Cr
         precio: tramiteTipo.precio,
       })
       await db.notificacion.update({
-        where: { id: notificacion.id },
+        where: { id: resultado.notificacion.id },
         data: {
           enviado: emailResult.success,
           enviadoAt: emailResult.success ? new Date() : null,
@@ -168,57 +178,12 @@ export async function crearExpedienteDesdeWizard({ wizardData, adminUserId }: Cr
     }
   }
 
-  return { expediente, cliente, tramiteTipo, accionInit, notificacion }
-}
-
-// ============================================================================
-// Validaciones de precondiciones (DEC-012)
-// ============================================================================
-
-async function validarPrecondicionesConTx(
-  tx: Prisma.TransactionClient,
-  codigoAccion: string,
-  expediente: any,
-  metadata?: Record<string, any>
-) {
-  switch (codigoAccion) {
-    case 'ACC-002': {
-      // Documentos aprobados: requerir al menos los documentos obligatorios marcados como válidos
-      const docs = await tx.documento.findMany({ where: { expedienteId: expediente.id } })
-      const obligatorios = ['PASAPORTE', 'ACTA_NACIMIENTO', 'FOTO_PASAPORTE']
-      const faltantes = obligatorios.filter((t) => {
-        const doc = docs.find((d) => d.tipo === t)
-        return !doc || doc.valido === false // falta o está marcado como inválido
-      })
-      if (faltantes.length > 0) {
-        throw new Error(`Faltan documentos obligatorios válidos: ${faltantes.join(', ')}`)
-      }
-      break
-    }
-    case 'ACC-004': {
-      // Cita generada: requerir datos de la cita
-      if (!metadata?.cita?.fecha || !metadata?.cita?.lugar) {
-        throw new Error('ACC-004 requiere metadata.cita con fecha y lugar')
-      }
-      break
-    }
-    case 'ACC-005': {
-      // Pago confirmado: requerir referencia de Mercado Pago
-      if (!metadata?.mercadoPagoId && !metadata?.manual) {
-        throw new Error('ACC-005 requiere metadata.mercadoPagoId o metadata.manual=true')
-      }
-      break
-    }
-    case 'ACC-006': {
-      // Trámite finalizado: requerir que esté pagado
-      const pagos = await tx.pago.findMany({
-        where: { expedienteId: expediente.id, estado: 'PAGADO' },
-      })
-      if (pagos.length === 0) {
-        throw new Error('No se puede finalizar un trámite sin pago confirmado')
-      }
-      break
-    }
+  return {
+    expediente: resultado.expediente,
+    cliente,
+    tramiteTipo,
+    accionInit: resultado.accionInit,
+    notificacion: resultado.notificacion,
   }
 }
 
@@ -234,16 +199,13 @@ export interface EjecutarAccionInput {
 }
 
 export async function ejecutarAccion({ folio, codigoAccion, ejecutadoPorId, metadata }: EjecutarAccionInput) {
-  // Normalizar folio a mayúsculas
-  const folioNormalizado = folio.toUpperCase().trim()
-
   // 1. Cargar expediente
   const expediente = await db.expediente.findUnique({
-    where: { folio: folioNormalizado },
+    where: { folio },
     include: { cliente: true, tramiteTipo: true },
   })
   if (!expediente) {
-    throw new Error(`Expediente no encontrado: ${folioNormalizado}`)
+    throw new Error(`Expediente no encontrado: ${folio}`)
   }
 
   // 2. Validar que la acción existe en el catálogo
@@ -263,34 +225,11 @@ export async function ejecutarAccion({ folio, codigoAccion, ejecutadoPorId, meta
     )
   }
 
-  // 4. Ejecutar en transacción: validar precondiciones + actualizar estado + crear acción + crear notificación
-  const resultado = await db.$transaction(async (tx) => {
-    // Validar precondiciones DENTRO de la transacción (evita TOCTOU)
-    // Inline validations
-    if (codigoAccion === "ACC-002") {
-      const docs = await tx.documento.findMany({ where: { expedienteId: expediente.id } })
-      const obligatorios = ["PASAPORTE", "ACTA_NACIMIENTO", "FOTO_PASAPORTE"]
-      const faltantes = obligatorios.filter((t) => {
-        const doc = docs.find((d) => d.tipo === t)
-        return !doc || doc.valido === false
-      })
-      if (faltantes.length > 0) {
-        throw new Error("Faltan documentos obligatorios validos: " + faltantes.join(", "))
-      }
-    }
-    if (codigoAccion === "ACC-004" && (!metadata?.cita?.fecha || !metadata?.cita?.lugar)) {
-      throw new Error("ACC-004 requiere metadata.cita con fecha y lugar")
-    }
-    if (codigoAccion === "ACC-005" && !metadata?.mercadoPagoId && !metadata?.manual) {
-      throw new Error("ACC-005 requiere metadata.mercadoPagoId o metadata.manual=true")
-    }
-    if (codigoAccion === "ACC-006") {
-      const pagos = await tx.pago.findMany({ where: { expedienteId: expediente.id, estado: "PAGADO" } })
-      if (pagos.length === 0) {
-        throw new Error("No se puede finalizar un tramite sin pago confirmado")
-      }
-    }
+  // 4. Validar precondiciones específicas por acción
+  await validarPrecondiciones(codigoAccion, expediente, metadata)
 
+  // 5. Ejecutar en transacción: actualizar estado + crear acción + crear notificación
+  const resultado = await db.$transaction(async (tx) => {
     // Si es ACC-005 manual, crear el registro de pago PAGADO
     let pagoCreado = null
     if (codigoAccion === 'ACC-005' && metadata?.manual) {
@@ -303,6 +242,20 @@ export async function ejecutarAccion({ folio, codigoAccion, ejecutadoPorId, meta
           fechaConfirmacion: new Date(),
         },
       })
+    }
+
+    // Releer el estado actual dentro de la transacción (evita stale state)
+    const expedienteActual = await tx.expediente.findUnique({
+      where: { id: expediente.id },
+      select: { estado: true },
+    })
+    if (!expedienteActual) {
+      throw new Error('Expediente no encontrado durante la transacción')
+    }
+
+    // Verificar que el estado no cambió desde que lo cargamos
+    if (expedienteActual.estado !== expediente.estado) {
+      throw new Error(`El estado del expediente cambió durante la operación. Estado actual: ${expedienteActual.estado}`)
     }
 
     // Actualizar expediente
@@ -332,7 +285,7 @@ export async function ejecutarAccion({ folio, codigoAccion, ejecutadoPorId, meta
         codigo: codigoAccion,
         descripcion: accionInfo.descripcion,
         ejecutadoPorId,
-        estadoPrevio: expediente.estado,
+        estadoPrevio: expedienteActual.estado,
         estadoNuevo: transicion.nuevoEstado,
         metadataJson: metadata ? JSON.stringify(metadata) : null,
       },
@@ -409,6 +362,54 @@ export async function ejecutarAccion({ folio, codigoAccion, ejecutadoPorId, meta
   // Limpiar _emailData antes de retornar
   const { _emailData, ...resultadoLimpio } = resultado as any
   return resultadoLimpio
+}
+
+// ============================================================================
+// Validaciones de precondiciones (DEC-012)
+// ============================================================================
+
+async function validarPrecondiciones(
+  codigoAccion: string,
+  expediente: any,
+  metadata?: Record<string, any>
+) {
+  switch (codigoAccion) {
+    case 'ACC-002': {
+      // Documentos aprobados: requerir al menos los documentos obligatorios
+      const docs = await db.documento.findMany({ where: { expedienteId: expediente.id } })
+      const tiposDocs = docs.map((d) => d.tipo)
+      const obligatorios = ['PASAPORTE', 'ACTA_NACIMIENTO', 'FOTO_PASAPORTE']
+      const faltantes = obligatorios.filter((t) => !tiposDocs.includes(t as any))
+      if (faltantes.length > 0) {
+        throw new Error(`Faltan documentos obligatorios: ${faltantes.join(', ')}`)
+      }
+      break
+    }
+    case 'ACC-004': {
+      // Cita generada: requerir datos de la cita
+      if (!metadata?.cita?.fecha || !metadata?.cita?.lugar) {
+        throw new Error('ACC-004 requiere metadata.cita con fecha y lugar')
+      }
+      break
+    }
+    case 'ACC-005': {
+      // Pago confirmado: requerir referencia de Mercado Pago
+      if (!metadata?.mercadoPagoId && !metadata?.manual) {
+        throw new Error('ACC-005 requiere metadata.mercadoPagoId o metadata.manual=true')
+      }
+      break
+    }
+    case 'ACC-006': {
+      // Trámite finalizado: requerir que esté pagado
+      const pagos = await db.pago.findMany({
+        where: { expedienteId: expediente.id, estado: 'PAGADO' },
+      })
+      if (pagos.length === 0) {
+        throw new Error('No se puede finalizar un trámite sin pago confirmado')
+      }
+      break
+    }
+  }
 }
 
 // ============================================================================

@@ -43,14 +43,21 @@ const isDev = process.env.NODE_ENV !== 'production'
 const isTest = process.env.NODE_ENV === 'test'
 
 // Filtra recursivamente datos sensibles de un objeto
-function sanitize(value: unknown): unknown {
+// Maneja referencias circulares con un WeakSet de objetos ya vistos
+function sanitize(value: unknown, seen = new WeakSet()): unknown {
   if (value === null || value === undefined) return value
   if (typeof value !== 'object') return value
   if (value instanceof Date) return value.toISOString()
   if (value instanceof Error) return { name: value.name, message: value.message, stack: value.stack }
 
+  // Detectar referencias circulares
+  if (seen.has(value as object)) {
+    return '[Circular]'
+  }
+  seen.add(value as object)
+
   if (Array.isArray(value)) {
-    return value.map(sanitize)
+    return value.map((v) => sanitize(v, seen))
   }
 
   const sanitized: Record<string, unknown> = {}
@@ -59,7 +66,7 @@ function sanitize(value: unknown): unknown {
     if (SENSITIVE_KEYS.some((s) => lowerKey.includes(s.toLowerCase()))) {
       sanitized[key] = '[REDACTED]'
     } else {
-      sanitized[key] = sanitize(val)
+      sanitized[key] = sanitize(val, seen)
     }
   }
   return sanitized

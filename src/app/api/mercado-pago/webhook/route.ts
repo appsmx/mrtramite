@@ -11,7 +11,7 @@ import { applyRateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting: 60 webhooks por minuto (MP puede enviar muchos)
+    // Rate limiting: 60 webhooks por minuto
     const rateLimitResponse = applyRateLimit(request, 'WEBHOOK_MP')
     if (rateLimitResponse) return rateLimitResponse
 
