@@ -1,0 +1,303 @@
+// ============================================================================
+// Mr. Trámite — Prisma Schema
+// ============================================================================
+// Diseñado bajo [BIBLIA] v0.5 con 17 decisiones aprobadas (DEC-001 a DEC-017).
+// Este schema es la autoridad técnica del modelo de datos del MVP.
+//
+// Decisiones clave reflejadas:
+//   DEC-009 — Modelo Expediente-centric (Cliente → N Expedientes)
+//   DEC-010 — Arquitectura modular (TramiteTipo como catálogo de módulos)
+//   DEC-011 — Motor de Acciones (tabla Accion como audit log)
+//   DEC-012 — Validaciones de puertas (matriz de transiciones en código)
+//   DEC-013 — 4 perfiles en enum (CLIENTE, ASESOR, GESTOR, ADMIN)
+//   DEC-016 — 10 estados estandarizados del expediente
+//   DEC-017 — Datos del pasaporte extraídos (campo datosPasaporte en Expediente)
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// MODELOS
+// ============================================================================
+
+/// Usuario del sistema con rol (DEC-013). Puede ser Cliente (acceso al portal),
+/// Asesor, Gestor o Admin. En MVP solo se asignan CLIENTE y ADMIN.
+model Usuario {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String
+  nombre       String
+  rol          UsuarioRol     @default(CLIENTE)
+  activo       Boolean        @default(true)
+  cliente      Cliente?
+  accionesEjecutadas Accion[]
+  expedientesAsignados Expediente[] @relation("ExpedienteAsignado")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([rol])
+}
+
+enum UsuarioRol {
+  CLIENTE
+  ASESOR
+  GESTOR
+  ADMIN
+}
+
+/// Catálogo maestro de personas (DEC-009). Un cliente puede tener N expedientes.
+/// Puede o no tener un Usuario asociado (los que llegaron por WhatsApp/Messenger
+/// y fueron registrados manualmente no tienen Usuario inicialmente).
+model Cliente {
+  id              String       @id @default(cuid())
+  nombreCompleto  String
+  curp            String?      @unique
+  email           String?
+  telefono        String?
+  // Canal por donde el cliente prefiere ser contactado
+  canalPreferido  CanalContacto?
+  // Canal por donde llegó inicialmente (DEC-005 — CRM unificado)
+  canalLlegada    CanalContacto
+  notas           String?
+  usuarioId       String?      @unique
+  usuario         Usuario?     @relation(fields: [usuarioId], references: [id])
+  expedientes     Expediente[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([canalLlegada])
+  @@index([email])
+}
+
+enum CanalContacto {
+  WEB
+  WHATSAPP
+  MESSENGER
+  INSTAGRAM
+  EMAIL
+  TELEFONO
+  OTRO
+}
+
+/// Catálogo de tipos de trámite (DEC-010). Cada registro es un "módulo" plugin.
+/// En MVP solo Visa está activo. configJson contiene la definición de campos
+/// del catálogo (referencia: DS-160_campos.md v1.1 para Visa).
+model TramiteTipo {
+  id            String   @id @default(cuid())
+  codigo        String   @unique // ej: "VISA", "PASAP", "INE", "LIC"
+  nombre        String   // ej: "Visa Americana de turista"
+  descripcion   String?
+  precio        Float    // MXN
+  activo        Boolean  @default(false)
+  prerequisito  String?  // ej: "pasaporte_vigente" para Visa
+  configJson    String   // JSON serializado: catálogo de campos, documentos, etc.
+  version       String   @default("1.0")
+  expedientes   Expediente[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([activo])
+}
+
+/// Unidad de trabajo del sistema (DEC-009). Cada expediente corresponde a
+/// un trámite específico para un cliente. Contiene el estado (DEC-016),
+/// los datos capturados (DS-160 para Visa), y datos extraídos (DEC-017).
+model Expediente {
+  id              String         @id @default(cuid())
+  folio           String         @unique // ej: "MRT-2026-0001"
+  clienteId       String
+  cliente         Cliente        @relation(fields: [clienteId], references: [id])
+  tramiteTipoId   String
+  tramiteTipo     TramiteTipo    @relation(fields: [tramiteTipoId], references: [id])
+  estado          ExpedienteEstado @default(NUEVO)
+
+  // Datos capturados por el cliente en el wizard (DEC-014, DEC-015)
+  // Para Visa: contiene las categorías 2-13 del DS-160 (DEC-017 excluye cat 1)
+  ds160Data       String?        // JSON serializado
+
+  // Datos extraídos de documentos (DEC-017) — capturados por el gestor en ACC-002
+  datosPasaporte  String?        // JSON: { numero, fechaEmision, fechaExpiracion, paisEmisor }
+
+  // Datos de la cita consular (llenados por gestor en ACC-004)
+  citaFecha       DateTime?
+  citaLugar       String?
+  citaDireccion   String?
+  citaConfirmada  Boolean        @default(false)
+
+  // Control
+  asignadoAId     String?        // Usuario gestor/asesor responsable
+  asignadoA       Usuario?       @relation("ExpedienteAsignado", fields: [asignadoAId], references: [id])
+  closedAt        DateTime?      // Cuando pasó a FINALIZADO, CANCELADO o ARCHIVADO
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  documentos      Documento[]
+  pagos           Pago[]
+  acciones        Accion[]
+  mensajes        Mensaje[]
+  notificaciones  Notificacion[]
+
+  @@index([clienteId])
+  @@index([estado])
+  @@index([tramiteTipoId])
+}
+
+/// 10 estados estandarizados (DEC-016). Las transiciones válidas
+/// están definidas en código (DEC-012), no en la DB.
+enum ExpedienteEstado {
+  NUEVO
+  ESPERANDO_DOCS
+  DOCS_INCOMPLETOS
+  REVISION
+  EN_PROCESO
+  LISTO_PARA_PAGO
+  PAGO_RECIBIDO
+  FINALIZADO
+  CANCELADO
+  ARCHIVADO
+}
+
+/// Documentos asociados a un expediente. Subidos por el cliente (wizard paso 9)
+/// o por el gestor (en el panel admin). El gestor marca `valido` en ACC-002.
+model Documento {
+  id              String         @id @default(cuid())
+  expedienteId    String
+  expediente      Expediente     @relation(fields: [expedienteId], references: [id])
+  tipo            DocumentoTipo
+  fileName        String         // nombre original
+  filePath        String         // ruta en storage
+  fileSize        Int            // bytes
+  mimeType        String
+  subidoPorCliente Boolean       @default(true) // false = subido por gestor
+  valido          Boolean?       // null = pendiente, true = válido, false = inválido
+  notaValidacion  String?        // comentario del gestor si marcó inválido
+  createdAt       DateTime       @default(now())
+
+  @@index([expedienteId])
+  @@index([tipo])
+}
+
+enum DocumentoTipo {
+  PASAPORTE
+  ACTA_NACIMIENTO
+  FOTO_PASAPORTE
+  COMPROBANTE_DOMICILIO
+  ACTA_MATRIMONIO
+  RECIBOS_INGRESOS
+  COMPROBANTE_ESTUDIOS
+  OTRO
+}
+
+/// Pagos asociados a un expediente. En MVP solo Mercado Pago (DEC-007).
+/// El webhook de Mercado Pago dispara ACC-005 automáticamente.
+model Pago {
+  id              String         @id @default(cuid())
+  expedienteId    String
+  expediente      Expediente     @relation(fields: [expedienteId], references: [id])
+  monto           Float          // MXN
+  metodo          PagoMetodo     @default(MERCADO_PAGO)
+  estado          PagoEstado     @default(PENDIENTE)
+  // Para Mercado Pago
+  mercadoPagoId   String?        @unique // ID de preferencia de MP
+  linkPago        String?        // URL de checkout
+  // Fechas
+  fechaSolicitud  DateTime       @default(now())
+  fechaConfirmacion DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([expedienteId])
+  @@index([estado])
+}
+
+enum PagoMetodo {
+  MERCADO_PAGO
+  TRANSFERENCIA
+  EFECTIVO
+}
+
+enum PagoEstado {
+  PENDIENTE
+  PAGADO
+  CANCELADO
+  REEMBOLSADO
+}
+
+/// Audit log del Motor de Acciones (DEC-011). Cada acción explícita ejecutada
+/// por un usuario queda registrada aquí con autor, fecha, estado previo y nuevo.
+/// Las automatizaciones (cambios de estado, envío de emails) se asocian a la acción.
+model Accion {
+  id              String         @id @default(cuid())
+  expedienteId    String
+  expediente      Expediente     @relation(fields: [expedienteId], references: [id])
+  // ID de la acción del catálogo (ACC-001 a ACC-006 en MVP, DEC-011 Sección 6.4)
+  codigo          String         // ej: "ACC-002"
+  descripcion     String         // ej: "Documentos aprobados"
+  ejecutadoPorId  String
+  ejecutadoPor    Usuario        @relation(fields: [ejecutadoPorId], references: [id])
+  // Para auditoría de transiciones (DEC-012)
+  estadoPrevio    ExpedienteEstado
+  estadoNuevo     ExpedienteEstado
+  // Metadata adicional (e.g., lista de documentos aprobados, monto del pago)
+  metadataJson    String?
+  createdAt       DateTime       @default(now())
+
+  @@index([expedienteId])
+  @@index([codigo])
+  @@index([ejecutadoPorId])
+}
+
+/// Mensajes intercambiados con el cliente sobre un expediente.
+/// En MVP es solo registro manual (el gestor anota qué dijo el cliente por WhatsApp).
+/// En fase 2 se integrará con WhatsApp/Messenger automáticamente.
+model Mensaje {
+  id              String         @id @default(cuid())
+  expedienteId    String
+  expediente      Expediente     @relation(fields: [expedienteId], references: [id])
+  direccion       MensajeDireccion // ENTRANTE (del cliente) o SALIENTE (al cliente)
+  canal           CanalContacto  // por dónde se envió/recibió
+  contenido       String
+  leido           Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+
+  @@index([expedienteId])
+}
+
+enum MensajeDireccion {
+  ENTRANTE
+  SALIENTE
+}
+
+/// Notificaciones de email enviadas (Resend en MVP). Cada una dispara una plantilla.
+/// Las 4 plantillas del MVP: SOLICITUD_RECIBIDA, CITA_CONFIRMADA, PAGO_CONFIRMADO, TRAMITE_FINALIZADO.
+model Notificacion {
+  id              String         @id @default(cuid())
+  expedienteId    String
+  expediente      Expediente     @relation(fields: [expedienteId], references: [id])
+  tipo            NotificacionTipo
+  emailDestino    String
+  asunto          String
+  enviado         Boolean        @default(false)
+  enviadoAt       DateTime?
+  error           String?        // si falló el envío
+  createdAt       DateTime       @default(now())
+
+  @@index([expedienteId])
+  @@index([tipo])
+}
+
+enum NotificacionTipo {
+  SOLICITUD_RECIBIDA
+  CITA_CONFIRMADA
+  PAGO_CONFIRMADO
+  TRAMITE_FINALIZADO
+  SOLICITUD_DOCS_ADICIONALES
+  RECORDATORIO_PAGO
+}
