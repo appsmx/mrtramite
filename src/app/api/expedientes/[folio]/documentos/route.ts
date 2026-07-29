@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { logger } from '@/lib/logger'
 import { applyRateLimit } from '@/lib/rate-limit'
 import { subirArchivo } from '@/lib/services/cloudinary-service'
+import { enviarAlertaTelegram } from '@/lib/services/telegram-service'
 
 // ============================================================================
 // POST /api/expedientes/[folio]/documentos
@@ -204,6 +205,24 @@ export async function PUT(
     }
 
     logger.info('Documento subido por cliente', { folio, tipo, url: cloudinaryResult.url })
+
+    // Enviar alerta de Telegram al admin
+    try {
+      const cliente = await db.cliente.findUnique({
+        where: { id: expediente.clienteId },
+        select: { nombreCompleto: true }
+      })
+      await enviarAlertaTelegram(
+        `📎 <b>Documento subido</b>\n\n` +
+        `👤 <b>Cliente:</b> ${cliente?.nombreCompleto || 'Desconocido'}\n` +
+        `📋 <b>Folio:</b> ${folio}\n` +
+        `📄 <b>Documento:</b> ${tipo.replace(/_/g, ' ')}\n` +
+        `📁 <b>Archivo:</b> ${file.name}\n\n` +
+        `Revisa el panel admin para validar este documento.`
+      )
+    } catch (telegramError) {
+      logger.error('Error enviando alerta Telegram documento', { error: telegramError instanceof Error ? telegramError.message : String(telegramError) })
+    }
 
     return NextResponse.json({
       ok: true,

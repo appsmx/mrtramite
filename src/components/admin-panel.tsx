@@ -704,24 +704,52 @@ function DetalleExpediente({
             </CardHeader>
             <CardContent className="space-y-2">
               <p className="text-xs text-muted-foreground mb-2">
-                Marca cada documento como "Recibido" cuando lo recibas por WhatsApp. Todos los obligatorios deben estar recibidos para poder aprobar (ACC-002).
+                Los documentos pueden ser recibidos por WhatsApp o subidos directamente por el cliente. Marca como "Recibido" los que ya tienes. Todos los obligatorios deben estar recibidos para aprobar (ACC-002).
               </p>
               {DOC_REQUERIDOS.map((dt) => {
                 const doc = expediente.documentos.find((d) => d.tipo === dt.tipo)
                 const recibido = doc?.valido === true
+                const subidoPendiente = doc && doc.valido === null
+                const tieneArchivo = doc && doc.filePath && doc.filePath !== 'whatsapp'
+                
+                let bgColor = 'border-border'
+                let iconColor = 'text-muted-foreground'
+                let badge = null
+                
+                if (recibido) {
+                  bgColor = 'border-green-300 bg-green-50'
+                  iconColor = 'text-green-600'
+                  badge = <span className="text-[10px] text-green-700 font-medium">✓ Recibido</span>
+                } else if (subidoPendiente) {
+                  bgColor = 'border-amber-300 bg-amber-50'
+                  iconColor = 'text-amber-600'
+                  badge = <span className="text-[10px] text-amber-700 font-medium">📎 Subido (pendiente)</span>
+                }
+                
                 return (
-                  <div key={dt.tipo} className={`flex items-center justify-between rounded-md border p-2.5 text-sm ${recibido ? 'border-green-300 bg-green-50' : 'border-border'}`}>
-                    <div className="flex items-center gap-2">
-                      <FileText className={`h-4 w-4 ${recibido ? 'text-green-600' : 'text-muted-foreground'}`} />
-                      <div>
-                        <span className="font-medium">{dt.label}</span>
-                        {dt.required && <span className="text-destructive ml-1">*</span>}
+                  <div key={dt.tipo} className={`flex items-center justify-between rounded-md border p-2.5 text-sm ${bgColor}`}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className={`h-4 w-4 flex-shrink-0 ${iconColor}`} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{dt.label}</span>
+                          {dt.required && <span className="text-destructive">*</span>}
+                          {badge}
+                        </div>
+                        {doc?.fileName && doc.fileName !== 'Recibido por WhatsApp' && (
+                          <span className="text-[10px] text-muted-foreground truncate block">{doc.fileName}</span>
+                        )}
+                        {tieneArchivo && (
+                          <a href={doc.filePath} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary underline block">
+                            Ver archivo
+                          </a>
+                        )}
                       </div>
                     </div>
                     <Button
                       variant={recibido ? 'outline' : 'default'}
                       size="sm"
-                      className={`h-7 text-xs ${recibido ? 'text-green-700 border-green-300' : 'bg-primary text-primary-foreground'}`}
+                      className={`h-7 text-xs flex-shrink-0 ml-2 ${recibido ? 'text-green-700 border-green-300' : 'bg-primary text-primary-foreground'}`}
                       onClick={() => marcarDocumento(dt.tipo, !recibido)}
                     >
                       {recibido ? '✓ Recibido' : 'Marcar recibido'}
