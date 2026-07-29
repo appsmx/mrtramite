@@ -178,20 +178,6 @@ export async function crearExpedienteDesdeWizard({ wizardData, adminUserId }: Cr
     }
   }
 
-  // Enviar alerta de Telegram (notificación en tiempo real al admin)
-  try {
-    const { alertarNuevoExpediente } = await import('./telegram-service')
-    await alertarNuevoExpediente({
-      folio,
-      nombre: cliente.nombreCompleto,
-      telefono: cliente.telefono || 'No proporcionado',
-      email: cliente.email || 'No proporcionado',
-      origen: 'WEB',
-    })
-  } catch (telegramError) {
-    logger.error('Error enviando alerta Telegram', { error: telegramError instanceof Error ? telegramError.message : String(telegramError) })
-  }
-
   return {
     expediente: resultado.expediente,
     cliente,
