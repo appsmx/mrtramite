@@ -50,7 +50,9 @@ interface ExpedienteCliente {
     id: string
     tipo: string
     fileName: string
+    filePath: string
     valido: boolean | null
+    subidoPorCliente: boolean
   }>
   pagos: Array<{
     id: string

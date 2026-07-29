@@ -90,9 +90,11 @@ interface ExpedienteDetalle {
     id: string
     tipo: string
     fileName: string
+    filePath: string
     fileSize: number
     valido: boolean | null
     notaValidacion: string | null
+    subidoPorCliente: boolean
     createdAt: string
   }>
   pagos: Array<{
