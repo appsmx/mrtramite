@@ -379,6 +379,7 @@ export function AdminPanel() {
                 setView('lista')
                 cargarExpedientes() // Recargar lista al volver (estado puede haber cambiado)
               }}
+              onRecargar={() => verDetalle(expedienteSeleccionado.folio)}
             />
           )}
         </main>
@@ -596,15 +597,41 @@ function DetalleExpediente({
   expediente,
   onEjecutarAccion,
   onVolver,
+  onRecargar,
 }: {
   expediente: ExpedienteDetalle
   onEjecutarAccion: (folio: string, codigo: string, metadata?: Record<string, any>) => void
   onVolver: () => void
+  onRecargar: () => void
 }) {
   const [showCitaModal, setShowCitaModal] = useState(false)
   const [citaFecha, setCitaFecha] = useState('')
   const [citaLugar, setCitaLugar] = useState('')
   const [citaDireccion, setCitaDireccion] = useState('')
+
+  const DOC_REQUERIDOS = [
+    { tipo: 'PASAPORTE', label: 'Pasaporte vigente', required: true },
+    { tipo: 'ACTA_NACIMIENTO', label: 'Acta de nacimiento', required: true },
+    { tipo: 'FOTO_PASAPORTE', label: 'Foto tipo pasaporte', required: true },
+    { tipo: 'COMPROBANTE_DOMICILIO', label: 'Comprobante de domicilio', required: false },
+    { tipo: 'ACTA_MATRIMONIO', label: 'Acta de matrimonio', required: false },
+    { tipo: 'RECIBOS_INGRESOS', label: 'Comprobantes de ingresos', required: false },
+  ]
+
+  const marcarDocumento = async (tipo: string, recibido: boolean) => {
+    try {
+      const res = await fetch(`/api/expedientes/${expediente.folio}/documentos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo, recibido }),
+      })
+      if (!res.ok) throw new Error('Error')
+      toast.success(recibido ? `${tipo.replace(/_/g, ' ')} marcado como recibido` : `${tipo.replace(/_/g, ' ')} desmarcado`)
+      onRecargar()
+    } catch (e) {
+      toast.error('Error al marcar documento')
+    }
+  }
 
   const accionesDisponibles = ACCIONES_DISPONIBLES[expediente.estado] || []
 
@@ -673,32 +700,35 @@ function DetalleExpediente({
           {/* Documentos */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Documentos ({expediente.documentos.length})</CardTitle>
+              <CardTitle className="text-sm">Documentos</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {expediente.documentos.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin documentos cargados</p>
-              ) : (
-                expediente.documentos.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between rounded-md border border-border p-2 text-sm">
+              <p className="text-xs text-muted-foreground mb-2">
+                Marca cada documento como "Recibido" cuando lo recibas por WhatsApp. Todos los obligatorios deben estar recibidos para poder aprobar (ACC-002).
+              </p>
+              {DOC_REQUERIDOS.map((dt) => {
+                const doc = expediente.documentos.find((d) => d.tipo === dt.tipo)
+                const recibido = doc?.valido === true
+                return (
+                  <div key={dt.tipo} className={`flex items-center justify-between rounded-md border p-2.5 text-sm ${recibido ? 'border-green-300 bg-green-50' : 'border-border'}`}>
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{d.tipo.replace(/_/g, ' ')}</span>
-                      <span className="text-xs text-muted-foreground">{d.fileName}</span>
+                      <FileText className={`h-4 w-4 ${recibido ? 'text-green-600' : 'text-muted-foreground'}`} />
+                      <div>
+                        <span className="font-medium">{dt.label}</span>
+                        {dt.required && <span className="text-destructive ml-1">*</span>}
+                      </div>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        d.valido === true ? 'bg-green-100 text-green-700' :
-                        d.valido === false ? 'bg-red-100 text-red-700' :
-                        'bg-amber-100 text-amber-700'
-                      }
+                    <Button
+                      variant={recibido ? 'outline' : 'default'}
+                      size="sm"
+                      className={`h-7 text-xs ${recibido ? 'text-green-700 border-green-300' : 'bg-primary text-primary-foreground'}`}
+                      onClick={() => marcarDocumento(dt.tipo, !recibido)}
                     >
-                      {d.valido === true ? 'Válido' : d.valido === false ? 'Inválido' : 'Pendiente'}
-                    </Badge>
+                      {recibido ? '✓ Recibido' : 'Marcar recibido'}
+                    </Button>
                   </div>
-                ))
-              )}
+                )
+              })}
             </CardContent>
           </Card>
 
