@@ -157,7 +157,7 @@ const ACCIONES_DISPONIBLES: Record<ExpedienteEstado, Array<{ codigo: string; lab
 export function AdminPanel() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [view, setView] = useState<'lista' | 'detalle'>('lista')
+  const [view, setView] = useState<'lista' | 'detalle' | 'clientes' | 'documentos' | 'pagos' | 'citas' | 'acciones' | 'ajustes'>('lista')
   const [expedientes, setExpedientes] = useState<ExpedienteListItem[]>([])
   const [expedienteSeleccionado, setExpedienteSeleccionado] = useState<ExpedienteDetalle | null>(null)
   const [loading, setLoading] = useState(true)
@@ -300,15 +300,15 @@ export function AdminPanel() {
           <Badge variant="secondary" className="ml-auto text-[10px]">ADMIN</Badge>
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          <SidebarItem icon={<LayoutDashboard className="h-4 w-4" />} label="Dashboard" active />
-          <SidebarItem icon={<FolderOpen className="h-4 w-4" />} label="Expedientes" active badge={stats.total} />
-          <SidebarItem icon={<Users className="h-4 w-4" />} label="Clientes" />
-          <SidebarItem icon={<FileText className="h-4 w-4" />} label="Documentos" />
-          <SidebarItem icon={<CreditCard className="h-4 w-4" />} label="Pagos" />
-          <SidebarItem icon={<Calendar className="h-4 w-4" />} label="Citas" />
-          <SidebarItem icon={<Activity className="h-4 w-4" />} label="Acciones (log)" />
+          <SidebarItem icon={<LayoutDashboard className="h-4 w-4" />} label="Dashboard" active={view === 'lista'} onClick={() => setView('lista')} />
+          <SidebarItem icon={<FolderOpen className="h-4 w-4" />} label="Expedientes" active={view === 'lista' || view === 'detalle'} badge={stats.total} onClick={() => setView('lista')} />
+          <SidebarItem icon={<Users className="h-4 w-4" />} label="Clientes" active={view === 'clientes'} onClick={() => setView('clientes')} />
+          <SidebarItem icon={<FileText className="h-4 w-4" />} label="Documentos" active={view === 'documentos'} onClick={() => setView('documentos')} />
+          <SidebarItem icon={<CreditCard className="h-4 w-4" />} label="Pagos" active={view === 'pagos'} onClick={() => setView('pagos')} />
+          <SidebarItem icon={<Calendar className="h-4 w-4" />} label="Citas" active={view === 'citas'} onClick={() => setView('citas')} />
+          <SidebarItem icon={<Activity className="h-4 w-4" />} label="Acciones (log)" active={view === 'acciones'} onClick={() => setView('acciones')} />
           <Separator className="my-2" />
-          <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ajustes" />
+          <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ajustes" active={view === 'ajustes'} onClick={() => setView('ajustes')} />
           <SidebarItem icon={<LogOut className="h-4 w-4" />} label="Cerrar sesión" onClick={() => signOut({ callbackUrl: '/' })} />
         </nav>
       </aside>
@@ -377,10 +377,46 @@ export function AdminPanel() {
               onEjecutarAccion={ejecutarAccion}
               onVolver={() => {
                 setView('lista')
-                cargarExpedientes() // Recargar lista al volver (estado puede haber cambiado)
+                cargarExpedientes()
               }}
               onRecargar={() => verDetalle(expedienteSeleccionado.folio)}
             />
+          )}
+          {view === 'clientes' && <VistaClientes expedientes={expedientes} onVerDetalle={verDetalle} />}
+          {view === 'documentos' && <VistaDocumentos expedientes={expedientes} onVerDetalle={verDetalle} />}
+          {view === 'pagos' && <VistaPagos expedientes={expedientes} onVerDetalle={verDetalle} />}
+          {view === 'citas' && <VistaCitas expedientes={expedientes} onVerDetalle={verDetalle} />}
+          {view === 'acciones' && <VistaAcciones expedientes={expedientes} onVerDetalle={verDetalle} />}
+          {view === 'ajustes' && (
+            <div className="max-w-2xl mx-auto space-y-4">
+              <div>
+                <h1 className="text-xl font-bold">Ajustes</h1>
+                <p className="text-sm text-muted-foreground">Configuración del sistema</p>
+              </div>
+              <Card>
+                <CardHeader><CardTitle className="text-sm">Cuenta de administrador</CardTitle></CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Email:</span><span className="font-medium">{session.user?.email}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Nombre:</span><span className="font-medium">{session.user?.name}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Rol:</span><span className="font-medium">ADMIN</span></div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader><CardTitle className="text-sm">Información del sistema</CardTitle></CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Total expedientes:</span><span className="font-medium">{stats.total}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Activos:</span><span className="font-medium">{stats.activos}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Listos para pago:</span><span className="font-medium">{stats.listosPago}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Finalizados:</span><span className="font-medium">{stats.finalizados}</span></div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader><CardTitle className="text-sm">Cambiar contraseña</CardTitle></CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">Para cambiar tu contraseña, contacta al desarrollador del sistema.</p>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </main>
       </div>
@@ -746,14 +782,27 @@ function DetalleExpediente({
                         )}
                       </div>
                     </div>
-                    <Button
-                      variant={recibido ? 'outline' : 'default'}
-                      size="sm"
-                      className={`h-7 text-xs flex-shrink-0 ml-2 ${recibido ? 'text-green-700 border-green-300' : 'bg-primary text-primary-foreground'}`}
-                      onClick={() => marcarDocumento(dt.tipo, !recibido)}
-                    >
-                      {recibido ? '✓ Recibido' : 'Marcar recibido'}
-                    </Button>
+                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                      <Button
+                        variant={recibido ? 'outline' : 'default'}
+                        size="sm"
+                        className={`h-7 text-xs ${recibido ? 'text-green-700 border-green-300' : 'bg-primary text-primary-foreground'}`}
+                        onClick={() => marcarDocumento(dt.tipo, !recibido)}
+                      >
+                        {recibido ? '✓ Recibido' : 'Marcar recibido'}
+                      </Button>
+                      {(recibido || subidoPendiente) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => marcarDocumento(dt.tipo, false)}
+                          title="Eliminar documento"
+                        >
+                          ✕
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )
               })}
@@ -945,6 +994,207 @@ function DetalleExpediente({
             </CardContent>
           </Card>
         </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================================================
+// Vistas del sidebar
+// ============================================================================
+
+function VistaClientes({ expedientes, onVerDetalle }: { expedientes: ExpedienteListItem[]; onVerDetalle: (folio: string) => void }) {
+  const clientesUnicos = new Map<string, { nombre: string; email: string | null; telefono: string | null; canal: string; expedientes: number }>()
+  expedientes.forEach(e => {
+    const key = e.cliente.email || e.cliente.telefono || e.cliente.id
+    const existing = clientesUnicos.get(key)
+    if (existing) {
+      existing.expedientes++
+    } else {
+      clientesUnicos.set(key, {
+        nombre: e.cliente.nombreCompleto,
+        email: e.cliente.email,
+        telefono: e.cliente.telefono,
+        canal: e.cliente.canalLlegada,
+        expedientes: 1,
+      })
+    }
+  })
+  const clientes = Array.from(clientesUnicos.values())
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-xl font-bold mb-1">Clientes</h1>
+      <p className="text-sm text-muted-foreground mb-4">{clientes.length} cliente(s) registrado(s)</p>
+      <Card>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b bg-muted/50">
+              <th className="text-left p-3 text-xs uppercase text-muted-foreground">Nombre</th>
+              <th className="text-left p-3 text-xs uppercase text-muted-foreground hidden sm:table-cell">Email</th>
+              <th className="text-left p-3 text-xs uppercase text-muted-foreground hidden md:table-cell">Teléfono</th>
+              <th className="text-left p-3 text-xs uppercase text-muted-foreground">Canal</th>
+              <th className="text-center p-3 text-xs uppercase text-muted-foreground">Expedientes</th>
+            </tr></thead>
+            <tbody>
+              {clientes.map((c, i) => (
+                <tr key={i} className="border-b border-border/50 hover:bg-muted/30">
+                  <td className="p-3 font-medium">{c.nombre}</td>
+                  <td className="p-3 text-xs hidden sm:table-cell">{c.email || '—'}</td>
+                  <td className="p-3 text-xs hidden md:table-cell">{c.telefono || '—'}</td>
+                  <td className="p-3"><Badge variant="outline" className="text-[10px]">{c.canal}</Badge></td>
+                  <td className="p-3 text-center font-medium">{c.expedientes}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+function VistaDocumentos({ expedientes, onVerDetalle }: { expedientes: ExpedienteListItem[]; onVerDetalle: (folio: string) => void }) {
+  const conDocs = expedientes.filter(e => e.counts.documentos > 0)
+  return (
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-xl font-bold mb-1">Documentos</h1>
+      <p className="text-sm text-muted-foreground mb-4">Documentos recibidos a través del sistema</p>
+      {conDocs.length === 0 ? (
+        <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">No hay documentos subidos al sistema todavía. Los documentos que recibas por WhatsApp puedes marcarlos como recibidos desde la ficha de cada expediente.</CardContent></Card>
+      ) : (
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b bg-muted/50">
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Folio</th>
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Cliente</th>
+                <th className="text-center p-3 text-xs uppercase text-muted-foreground">Docs</th>
+                <th className="text-right p-3 text-xs uppercase text-muted-foreground">Acción</th>
+              </tr></thead>
+              <tbody>
+                {conDocs.map(e => (
+                  <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => onVerDetalle(e.folio)}>
+                    <td className="p-3 font-mono text-xs">{e.folio}</td>
+                    <td className="p-3">{e.cliente.nombreCompleto}</td>
+                    <td className="p-3 text-center">{e.counts.documentos}</td>
+                    <td className="p-3 text-right"><Button variant="ghost" size="sm" className="h-7 text-xs">Ver</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+function VistaPagos({ expedientes, onVerDetalle }: { expedientes: ExpedienteListItem[]; onVerDetalle: (folio: string) => void }) {
+  const conPagos = expedientes.filter(e => e.counts.pagos > 0 || e.estado === 'LISTO_PARA_PAGO' || e.estado === 'PAGO_RECIBIDO')
+  return (
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-xl font-bold mb-1">Pagos</h1>
+      <p className="text-sm text-muted-foreground mb-4">Expedientes con pagos pendientes o confirmados</p>
+      {conPagos.length === 0 ? (
+        <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">No hay pagos registrados todavía.</CardContent></Card>
+      ) : (
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b bg-muted/50">
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Folio</th>
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Cliente</th>
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Estado</th>
+                <th className="text-right p-3 text-xs uppercase text-muted-foreground">Acción</th>
+              </tr></thead>
+              <tbody>
+                {conPagos.map(e => (
+                  <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => onVerDetalle(e.folio)}>
+                    <td className="p-3 font-mono text-xs">{e.folio}</td>
+                    <td className="p-3">{e.cliente.nombreCompleto}</td>
+                    <td className="p-3"><Badge className={`text-[10px] ${ESTADO_CONFIG[e.estado].color}`} variant="secondary">{ESTADO_CONFIG[e.estado].label}</Badge></td>
+                    <td className="p-3 text-right"><Button variant="ghost" size="sm" className="h-7 text-xs">Ver</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+function VistaCitas({ expedientes, onVerDetalle }: { expedientes: ExpedienteListItem[]; onVerDetalle: (folio: string) => void }) {
+  const conCitas = expedientes.filter(e => ['LISTO_PARA_PAGO', 'PAGO_RECIBIDO', 'FINALIZADO'].includes(e.estado))
+  return (
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-xl font-bold mb-1">Citas</h1>
+      <p className="text-sm text-muted-foreground mb-4">Expedientes con cita consular asignada</p>
+      {conCitas.length === 0 ? (
+        <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">No hay citas asignadas todavía.</CardContent></Card>
+      ) : (
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b bg-muted/50">
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Folio</th>
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Cliente</th>
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Estado</th>
+                <th className="text-right p-3 text-xs uppercase text-muted-foreground">Acción</th>
+              </tr></thead>
+              <tbody>
+                {conCitas.map(e => (
+                  <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => onVerDetalle(e.folio)}>
+                    <td className="p-3 font-mono text-xs">{e.folio}</td>
+                    <td className="p-3">{e.cliente.nombreCompleto}</td>
+                    <td className="p-3"><Badge className={`text-[10px] ${ESTADO_CONFIG[e.estado].color}`} variant="secondary">{ESTADO_CONFIG[e.estado].label}</Badge></td>
+                    <td className="p-3 text-right"><Button variant="ghost" size="sm" className="h-7 text-xs">Ver</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+function VistaAcciones({ expedientes, onVerDetalle }: { expedientes: ExpedienteListItem[]; onVerDetalle: (folio: string) => void }) {
+  const conAcciones = expedientes.filter(e => e.counts.acciones > 0).sort((a, b) => b.counts.acciones - a.counts.acciones)
+  return (
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-xl font-bold mb-1">Acciones (log)</h1>
+      <p className="text-sm text-muted-foreground mb-4">Historial de acciones del Motor de Acciones</p>
+      {conAcciones.length === 0 ? (
+        <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">No hay acciones registradas todavía.</CardContent></Card>
+      ) : (
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b bg-muted/50">
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Folio</th>
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Cliente</th>
+                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Estado actual</th>
+                <th className="text-center p-3 text-xs uppercase text-muted-foreground">Acciones</th>
+                <th className="text-right p-3 text-xs uppercase text-muted-foreground">Ver detalle</th>
+              </tr></thead>
+              <tbody>
+                {conAcciones.map(e => (
+                  <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => onVerDetalle(e.folio)}>
+                    <td className="p-3 font-mono text-xs">{e.folio}</td>
+                    <td className="p-3">{e.cliente.nombreCompleto}</td>
+                    <td className="p-3"><Badge className={`text-[10px] ${ESTADO_CONFIG[e.estado].color}`} variant="secondary">{ESTADO_CONFIG[e.estado].label}</Badge></td>
+                    <td className="p-3 text-center font-medium">{e.counts.acciones}</td>
+                    <td className="p-3 text-right"><Button variant="ghost" size="sm" className="h-7 text-xs">Ver</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
     </div>
   )

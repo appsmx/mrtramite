@@ -374,18 +374,59 @@ export function ClientePortal() {
                   {DOC_REQUERIDOS.map((dt) => {
                     const doc = expediente.documentos.find(d => d.tipo === dt.tipo)
                     const yaSubido = !!doc
-                    const faltante = !yaSubido
                     if (yaSubido) {
-                      // Ya subido, mostrar como pendiente de revisión
+                      // Ya subido, mostrar como subido + opción de reemplazar
                       return (
                         <div key={dt.tipo} className="flex items-center justify-between bg-green-50 rounded-md p-2.5 border border-green-200">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                            <span className="text-xs font-medium">{dt.label}</span>
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs font-medium">{dt.label}</span>
+                              {doc?.fileName && doc.fileName !== 'Recibido por WhatsApp' && (
+                                <span className="text-[10px] text-muted-foreground truncate block">{doc.fileName}</span>
+                              )}
+                              <span className="text-[10px] text-green-700 font-medium block">
+                                ✓ Subido {doc?.valido === true ? '(aprobado)' : '(pendiente de revisión)'}
+                              </span>
+                            </div>
                           </div>
-                          <span className="text-[10px] text-green-700 font-medium">
-                            ✓ Subido {doc.valido === true ? '(aprobado)' : '(pendiente de revisión)'}
-                          </span>
+                          <label className="cursor-pointer flex-shrink-0 ml-2">
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              className="sr-only"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0]
+                                if (!file) return
+                                if (file.size > 4 * 1024 * 1024) {
+                                  toast.error('Archivo demasiado grande', { description: 'Máximo 4MB. Si es más grande, envíalo por WhatsApp.' })
+                                  return
+                                }
+                                toast.info('Reemplazando documento...', { description: file.name })
+                                try {
+                                  const formData = new FormData()
+                                  formData.append('file', file)
+                                  formData.append('tipo', dt.tipo)
+                                  const res = await fetch(`/api/expedientes/${folio}/documentos`, {
+                                    method: 'PUT',
+                                    body: formData,
+                                  })
+                                  if (!res.ok) {
+                                    const err = await res.json().catch(() => ({}))
+                                    throw new Error(err.error || 'Error')
+                                  }
+                                  toast.success('Documento reemplazado', { description: `${dt.label} actualizado correctamente.` })
+                                  cargarExpediente()
+                                } catch (err) {
+                                  toast.error('Error al reemplazar', { description: err instanceof Error ? err.message : 'Intenta por WhatsApp' })
+                                }
+                              }}
+                            />
+                            <span className="flex items-center gap-1 text-[10px] bg-amber-100 text-amber-700 border border-amber-300 px-2 py-1 rounded-md hover:bg-amber-200 transition-colors">
+                              <Upload className="h-3 w-3" />
+                              Reemplazar
+                            </span>
+                          </label>
                         </div>
                       )
                     }
