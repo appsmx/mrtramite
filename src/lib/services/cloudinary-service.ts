@@ -57,6 +57,7 @@ export async function subirArchivo(
       resource_type: resourceType,
       unique_filename: false,
       overwrite: true,
+      type: 'authenticated',
     })
 
     logger.info('Archivo subido a Cloudinary', { publicId: result.public_id, bytes: result.bytes })
@@ -128,3 +129,57 @@ export async function eliminarArchivo(publicId: string): Promise<boolean> {
 }
 
 export const cloudinaryConfigured = isConfigured
+
+/**
+ * Genera una URL firmada para un asset autenticado de Cloudinary.
+ * La URL expira después del tiempo especificado (default: 1 hora).
+ * Solo alguien con las credenciales de Cloudinary puede generarla.
+ */
+export function generarUrlFirmada(publicId: string, resourceType: string = 'image', expiresInSeconds: number = 3600): string {
+  if (!isConfigured) {
+    return `https://res.cloudinary.com/demo/${resourceType}/upload/v1/${publicId}`
+  }
+
+  try {
+    const signedUrl = cloudinary.utils.private_download_url(publicId, resourceType === 'image' ? 'jpg' : 'pdf', {
+      expires_at: Math.floor(Date.now() / 1000) + expiresInSeconds,
+      type: 'authenticated',
+    })
+    return signedUrl
+  } catch (error) {
+    logger.error('Error generando URL firmada', { publicId, error: error instanceof Error ? error.message : String(error) })
+    // Fallback: usar signed_url de cloudinary
+    try {
+      const signedUrl = cloudinary.url(publicId, {
+        type: 'authenticated',
+        sign_url: true,
+        expires_at: Math.floor(Date.now() / 1000) + expiresInSeconds,
+        resource_type: resourceType,
+      })
+      return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/${resourceType}/${signedUrl}`
+    } catch {
+      return ''
+    }
+  }
+}
+
+/**
+ * Extrae el publicId de una URL de Cloudinary.
+ * Ej: https://res.cloudinary.com/nvjxzuy1/image/upload/v123/mrtramite/MRT-2026-0002/PASAPORTE_456.jpg
+ * → mrtramite/MRT-2026-0002/PASAPORTE_456
+ */
+export function extraerPublicIdDeUrl(url: string): string {
+  if (!url || url === 'whatsapp') return ''
+  const match = url.match(/\/(?:upload|authenticated)\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/)
+  return match ? match[1] : ''
+}
+
+/**
+ * Extrae el resource_type de una URL de Cloudinary.
+ */
+export function extraerResourceTypeDeUrl(url: string): string {
+  if (url.includes('/image/')) return 'image'
+  if (url.includes('/raw/')) return 'raw'
+  if (url.includes('/video/')) return 'video'
+  return 'image'
+}

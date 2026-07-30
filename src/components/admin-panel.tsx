@@ -671,6 +671,26 @@ function DetalleExpediente({
     }
   }
 
+  // Obtener URL firmada para ver documento
+  const verDocumento = async (documentoId: string) => {
+    try {
+      const res = await fetch(`/api/expedientes/${expediente.folio}/documentos/ver-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentoId }),
+      })
+      if (!res.ok) throw new Error('Error')
+      const data = await res.json()
+      if (data.url) {
+        window.open(data.url, '_blank')
+      } else {
+        toast.error('No se pudo generar el enlace')
+      }
+    } catch {
+      toast.error('Error al cargar documento')
+    }
+  }
+
   const accionesDisponibles = ACCIONES_DISPONIBLES[expediente.estado] || []
 
   // Datos DS-160
@@ -778,9 +798,12 @@ function DetalleExpediente({
                           <span className="text-[10px] text-muted-foreground truncate block">{doc.fileName}</span>
                         )}
                         {tieneArchivo && (
-                          <a href={doc.filePath} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary underline block">
-                            Ver archivo
-                          </a>
+                          <button
+                            onClick={() => verDocumento(doc.id)}
+                            className="text-[10px] text-primary underline block cursor-pointer hover:text-primary/80"
+                          >
+                            Ver archivo (enlace válido 1 hora)
+                          </button>
                         )}
                       </div>
                     </div>
