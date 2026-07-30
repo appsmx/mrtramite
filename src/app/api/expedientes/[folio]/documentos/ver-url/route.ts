@@ -3,21 +3,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { logger } from '@/lib/logger'
-import { v2 as cloudinary } from 'cloudinary'
-
-// Configurar Cloudinary si hay credenciales
-const isConfigured = process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET
-if (isConfigured) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  })
-}
 
 // ============================================================================
 // POST /api/expedientes/[folio]/documentos/ver-url
-// Genera una URL firmada (válida 1 hora) para ver un documento
+// Retorna el documento como proxy (la URL de Cloudinary nunca se expone)
 // Requiere sesión de admin o cliente dueño del expediente
 // ============================================================================
 
@@ -64,56 +53,27 @@ export async function POST(
       return NextResponse.json({ error: 'Este documento no tiene archivo digital' }, { status: 404 })
     }
 
-    // Extraer publicId de la URL
-    const url = documento.filePath
-    const match = url.match(/\/(?:upload|authenticated)\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/)
-    const publicId = match ? match[1] : ''
-    const resourceType = url.includes('/image/') ? 'image' : url.includes('/raw/') ? 'raw' : 'image'
-
-    if (!publicId) {
-      return NextResponse.json({ error: 'No se pudo procesar la URL' }, { status: 500 })
+    // Descargar el archivo de Cloudinary y servirlo como proxy
+    const fileResponse = await fetch(documento.filePath)
+    if (!fileResponse.ok) {
+      logger.error('Error descargando documento de Cloudinary', { status: fileResponse.status, url: documento.filePath })
+      return NextResponse.json({ error: 'No se pudo cargar el documento' }, { status: 500 })
     }
 
-    if (!isConfigured) {
-      return NextResponse.json({ url: documento.filePath })
-    }
+    const contentType = documento.mimeType || fileResponse.headers.get('content-type') || 'application/octet-stream'
+    const arrayBuffer = await fileResponse.arrayBuffer()
 
-    // Intentar generar URL firmada como authenticated primero
-    // Si falla (porque el recurso es public), intentar como public con sign_url
-    let signedUrl = ''
+    logger.info('Documento servido via proxy', { folio, documentoId, contentType })
 
-    try {
-      // Intentar como authenticated
-      signedUrl = cloudinary.url(publicId, {
-        type: 'authenticated',
-        sign_url: true,
-        expires_at: Math.floor(Date.now() / 1000) + 3600,
-        resource_type: resourceType,
-      })
-      // Verificar si realmente funciona haciendo una petición HEAD
-      const checkResponse = await fetch(signedUrl, { method: 'HEAD', redirect: 'follow' })
-      if (checkResponse.ok) {
-        logger.info('URL firmada (authenticated) generada', { folio, documentoId })
-        return NextResponse.json({ ok: true, url: signedUrl, expiresInSeconds: 3600 })
-      }
-    } catch {
-      // Continuar al fallback
-    }
-
-    // Fallback: generar URL firmada como public (para documentos subidos antes de la migración)
-    try {
-      signedUrl = cloudinary.url(publicId, {
-        type: 'public',
-        sign_url: true,
-        expires_at: Math.floor(Date.now() / 1000) + 3600,
-        resource_type: resourceType,
-      })
-      logger.info('URL firmada (public) generada', { folio, documentoId })
-      return NextResponse.json({ ok: true, url: signedUrl, expiresInSeconds: 3600 })
-    } catch (error) {
-      logger.error('Error generando URL firmada', { publicId, error: error instanceof Error ? error.message : String(error) })
-      return NextResponse.json({ error: 'Error generando URL firmada' }, { status: 500 })
-    }
+    // Retornar el archivo directamente
+    return new NextResponse(arrayBuffer, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'Content-Disposition': `inline; filename="${documento.fileName}"`,
+        'Cache-Control': 'private, no-store, max-age=0',
+      },
+    })
   } catch (error) {
     logger.error('Error en ver-url', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })

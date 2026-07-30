@@ -671,21 +671,24 @@ function DetalleExpediente({
     }
   }
 
-  // Obtener URL firmada para ver documento
+  // Obtener documento via proxy (URL de Cloudinary nunca se expone)
   const verDocumento = async (documentoId: string) => {
     try {
+      toast.info('Cargando documento...')
       const res = await fetch(`/api/expedientes/${expediente.folio}/documentos/ver-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ documentoId }),
       })
       if (!res.ok) throw new Error('Error')
-      const data = await res.json()
-      if (data.url) {
-        window.open(data.url, '_blank')
-      } else {
-        toast.error('No se pudo generar el enlace')
-      }
+      
+      // La API retorna el archivo directamente (no JSON)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank')
+      
+      // Limpiar la URL temporal después de 1 minuto
+      setTimeout(() => URL.revokeObjectURL(url), 60000)
     } catch {
       toast.error('Error al cargar documento')
     }
