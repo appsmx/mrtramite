@@ -49,12 +49,19 @@ interface BotpressWebhookBody {
 
 export async function POST(request: NextRequest) {
   try {
+    // Validar API key compartida con Botpress
+    const botpressKey = request.headers.get('x-botpress-key')
+    const expectedKey = process.env.BOTPRESS_WEBHOOK_KEY
+    if (!expectedKey || botpressKey !== expectedKey) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
     // Rate limiting
     const rateLimitResponse = applyRateLimit(request, 'WEBHOOK_MP')
     if (rateLimitResponse) return rateLimitResponse
 
     const body: BotpressWebhookBody = await request.json()
-    logger.info('Webhook Botpress recibido', { nombre: body.nombre, telefono: body.telefono })
+    logger.info('Webhook Botpress recibido', { telefono: body.telefono })
 
     // Validar campos mínimos
     if (!body.nombre || !body.telefono) {
@@ -64,7 +71,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validar formato de email si se proporciona
     const email = body.correo || body.email || null
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        return NextResponse.json(
+          { error: 'El formato del email no es válido' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Validar formato de CURP si se proporciona
+    if (body.curp && !/^[A-Z0-9]{18}$/i.test(body.curp)) {
+      return NextResponse.json(
+        { error: 'El CURP debe tener exactamente 18 caracteres alfanuméricos' },
+        { status: 400 }
+      )
+    }
 
     // 1. Buscar o crear cliente
     let cliente = null

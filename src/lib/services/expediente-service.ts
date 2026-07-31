@@ -390,6 +390,10 @@ async function validarPrecondiciones(
       if (!metadata?.cita?.fecha || !metadata?.cita?.lugar) {
         throw new Error('ACC-004 requiere metadata.cita con fecha y lugar')
       }
+      const fechaCita = new Date(metadata.cita.fecha)
+      if (fechaCita <= new Date()) {
+        throw new Error('La fecha de la cita debe ser posterior a la fecha actual')
+      }
       break
     }
     case 'ACC-005': {
