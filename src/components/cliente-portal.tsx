@@ -129,7 +129,7 @@ export function ClientePortal() {
   }, [folio, cargarExpediente])
 
   const handleEnviarComprobante = () => {
-    const WHATSAPP_NUMBER = '526611381106'
+    const WHATSAPP_NUMBER = '526642342946'
     const mensaje = encodeURIComponent(
       `Hola Mr. Trámite, soy ${expediente?.cliente?.nombreCompleto || ''}. ` +
       `Mi folio es ${folio}. ` +
@@ -491,7 +491,7 @@ export function ClientePortal() {
                     </div>
                     <button
                       onClick={() => {
-                        const WHATSAPP_NUMBER = '526611381106'
+                        const WHATSAPP_NUMBER = '526642342946'
                         const listaDocs = docsFaltantes.map(d => d.label).join(', ')
                         const mensaje = encodeURIComponent(
                           `Hola Mr. Trámite, soy ${expediente.cliente?.nombreCompleto || ''}. ` +
