@@ -530,6 +530,20 @@ export function Landing({ onStartTramite }: LandingProps) {
             <p>© 2026 Mr. Trámite. Todos los derechos reservados.</p>
             <p>Hecho en México 🇲🇽</p>
           </div>
+
+          {/* Powered by LOGAN */}
+          <div className="mt-4 flex items-center justify-center gap-1.5 border-t border-background/10 pt-4">
+            <span className="text-[10px] text-background/40">Powered by</span>
+            <a
+              href="https://github.com/appsmx/logan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-semibold text-background/60 hover:text-background/90 transition-colors"
+            >
+              LOGAN
+            </a>
+            <span className="text-[10px] text-background/40">· Learning, Organization, Governance, Architecture &amp; Navigation</span>
+          </div>
         </div>
       </footer>
 
