@@ -24,6 +24,11 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Lock,
+  UserCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -90,11 +95,9 @@ interface ExpedienteDetalle {
     id: string
     tipo: string
     fileName: string
-    filePath: string
     fileSize: number
     valido: boolean | null
     notaValidacion: string | null
-    subidoPorCliente: boolean
     createdAt: string
   }>
   pagos: Array<{
@@ -159,7 +162,7 @@ const ACCIONES_DISPONIBLES: Record<ExpedienteEstado, Array<{ codigo: string; lab
 export function AdminPanel() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [view, setView] = useState<'lista' | 'detalle' | 'clientes' | 'documentos' | 'pagos' | 'citas' | 'acciones' | 'ajustes'>('lista')
+  const [view, setView] = useState<'lista' | 'detalle' | 'ajustes'>('lista')
   const [expedientes, setExpedientes] = useState<ExpedienteListItem[]>([])
   const [expedienteSeleccionado, setExpedienteSeleccionado] = useState<ExpedienteDetalle | null>(null)
   const [loading, setLoading] = useState(true)
@@ -303,12 +306,12 @@ export function AdminPanel() {
         </div>
         <nav className="flex-1 p-3 space-y-1">
           <SidebarItem icon={<LayoutDashboard className="h-4 w-4" />} label="Dashboard" active={view === 'lista'} onClick={() => setView('lista')} />
-          <SidebarItem icon={<FolderOpen className="h-4 w-4" />} label="Expedientes" active={view === 'lista' || view === 'detalle'} badge={stats.total} onClick={() => setView('lista')} />
-          <SidebarItem icon={<Users className="h-4 w-4" />} label="Clientes" active={view === 'clientes'} onClick={() => setView('clientes')} />
-          <SidebarItem icon={<FileText className="h-4 w-4" />} label="Documentos" active={view === 'documentos'} onClick={() => setView('documentos')} />
-          <SidebarItem icon={<CreditCard className="h-4 w-4" />} label="Pagos" active={view === 'pagos'} onClick={() => setView('pagos')} />
-          <SidebarItem icon={<Calendar className="h-4 w-4" />} label="Citas" active={view === 'citas'} onClick={() => setView('citas')} />
-          <SidebarItem icon={<Activity className="h-4 w-4" />} label="Acciones (log)" active={view === 'acciones'} onClick={() => setView('acciones')} />
+          <SidebarItem icon={<FolderOpen className="h-4 w-4" />} label="Expedientes" active={view === 'lista'} badge={stats.total} onClick={() => setView('lista')} />
+          <SidebarItem icon={<Users className="h-4 w-4" />} label="Clientes" />
+          <SidebarItem icon={<FileText className="h-4 w-4" />} label="Documentos" />
+          <SidebarItem icon={<CreditCard className="h-4 w-4" />} label="Pagos" />
+          <SidebarItem icon={<Calendar className="h-4 w-4" />} label="Citas" />
+          <SidebarItem icon={<Activity className="h-4 w-4" />} label="Acciones (log)" />
           <Separator className="my-2" />
           <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ajustes" active={view === 'ajustes'} onClick={() => setView('ajustes')} />
           <SidebarItem icon={<LogOut className="h-4 w-4" />} label="Cerrar sesión" onClick={() => signOut({ callbackUrl: '/' })} />
@@ -340,6 +343,20 @@ export function AdminPanel() {
                     <span className="text-foreground font-medium">{expedienteSeleccionado.folio}</span>
                   </>
                 )}
+              </>
+            )}
+            {view === 'ajustes' && (
+              <>
+                <ChevronRight className="h-3 w-3" />
+                <button
+                  onClick={() => setView('lista')}
+                  className="hover:text-foreground flex items-center gap-1"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                  Volver
+                </button>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-foreground font-medium">Ajustes</span>
               </>
             )}
           </div>
@@ -379,47 +396,11 @@ export function AdminPanel() {
               onEjecutarAccion={ejecutarAccion}
               onVolver={() => {
                 setView('lista')
-                cargarExpedientes()
+                cargarExpedientes() // Recargar lista al volver (estado puede haber cambiado)
               }}
-              onRecargar={() => verDetalle(expedienteSeleccionado.folio)}
             />
           )}
-          {view === 'clientes' && <VistaClientes expedientes={expedientes} onVerDetalle={verDetalle} />}
-          {view === 'documentos' && <VistaDocumentos expedientes={expedientes} onVerDetalle={verDetalle} />}
-          {view === 'pagos' && <VistaPagos expedientes={expedientes} onVerDetalle={verDetalle} />}
-          {view === 'citas' && <VistaCitas expedientes={expedientes} onVerDetalle={verDetalle} />}
-          {view === 'acciones' && <VistaAcciones expedientes={expedientes} onVerDetalle={verDetalle} />}
-          {view === 'ajustes' && (
-            <div className="max-w-2xl mx-auto space-y-4">
-              <div>
-                <h1 className="text-xl font-bold">Ajustes</h1>
-                <p className="text-sm text-muted-foreground">Configuración del sistema</p>
-              </div>
-              <Card>
-                <CardHeader><CardTitle className="text-sm">Cuenta de administrador</CardTitle></CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Email:</span><span className="font-medium">{session.user?.email}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Nombre:</span><span className="font-medium">{session.user?.name}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Rol:</span><span className="font-medium">ADMIN</span></div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader><CardTitle className="text-sm">Información del sistema</CardTitle></CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Total expedientes:</span><span className="font-medium">{stats.total}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Activos:</span><span className="font-medium">{stats.activos}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Listos para pago:</span><span className="font-medium">{stats.listosPago}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Finalizados:</span><span className="font-medium">{stats.finalizados}</span></div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader><CardTitle className="text-sm">Cambiar contraseña</CardTitle></CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">Para cambiar tu contraseña, contacta al desarrollador del sistema.</p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+          {view === 'ajustes' && <AjustesPanel onVolver={() => setView('lista')} />}
         </main>
       </div>
     </div>
@@ -635,64 +616,15 @@ function DetalleExpediente({
   expediente,
   onEjecutarAccion,
   onVolver,
-  onRecargar,
 }: {
   expediente: ExpedienteDetalle
   onEjecutarAccion: (folio: string, codigo: string, metadata?: Record<string, any>) => void
   onVolver: () => void
-  onRecargar: () => void
 }) {
   const [showCitaModal, setShowCitaModal] = useState(false)
   const [citaFecha, setCitaFecha] = useState('')
   const [citaLugar, setCitaLugar] = useState('')
   const [citaDireccion, setCitaDireccion] = useState('')
-
-  const DOC_REQUERIDOS = [
-    { tipo: 'PASAPORTE', label: 'Pasaporte vigente', required: true },
-    { tipo: 'ACTA_NACIMIENTO', label: 'Acta de nacimiento', required: true },
-    { tipo: 'FOTO_PASAPORTE', label: 'Foto tipo pasaporte', required: true },
-    { tipo: 'COMPROBANTE_DOMICILIO', label: 'Comprobante de domicilio', required: false },
-    { tipo: 'ACTA_MATRIMONIO', label: 'Acta de matrimonio', required: false },
-    { tipo: 'RECIBOS_INGRESOS', label: 'Comprobantes de ingresos', required: false },
-  ]
-
-  const marcarDocumento = async (tipo: string, recibido: boolean) => {
-    try {
-      const res = await fetch(`/api/expedientes/${expediente.folio}/documentos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo, recibido }),
-      })
-      if (!res.ok) throw new Error('Error')
-      toast.success(recibido ? `${tipo.replace(/_/g, ' ')} marcado como recibido` : `${tipo.replace(/_/g, ' ')} desmarcado`)
-      onRecargar()
-    } catch (e) {
-      toast.error('Error al marcar documento')
-    }
-  }
-
-  // Obtener documento via proxy (URL de Cloudinary nunca se expone)
-  const verDocumento = async (documentoId: string) => {
-    try {
-      toast.info('Cargando documento...')
-      const res = await fetch(`/api/expedientes/${expediente.folio}/documentos/ver-url`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentoId }),
-      })
-      if (!res.ok) throw new Error('Error')
-      
-      // La API retorna el archivo directamente (no JSON)
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      window.open(url, '_blank')
-      
-      // Limpiar la URL temporal después de 1 minuto
-      setTimeout(() => URL.revokeObjectURL(url), 60000)
-    } catch {
-      toast.error('Error al cargar documento')
-    }
-  }
 
   const accionesDisponibles = ACCIONES_DISPONIBLES[expediente.estado] || []
 
@@ -761,79 +693,32 @@ function DetalleExpediente({
           {/* Documentos */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Documentos</CardTitle>
+              <CardTitle className="text-sm">Documentos ({expediente.documentos.length})</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <p className="text-xs text-muted-foreground mb-2">
-                Los documentos pueden ser recibidos por WhatsApp o subidos directamente por el cliente. Marca como "Recibido" los que ya tienes. Todos los obligatorios deben estar recibidos para aprobar (ACC-002).
-              </p>
-              {DOC_REQUERIDOS.map((dt) => {
-                const doc = expediente.documentos.find((d) => d.tipo === dt.tipo)
-                const recibido = doc?.valido === true
-                const subidoPendiente = doc && doc.valido === null
-                const tieneArchivo = doc && doc.filePath && doc.filePath !== 'whatsapp'
-                
-                let bgColor = 'border-border'
-                let iconColor = 'text-muted-foreground'
-                let badge = null
-                
-                if (recibido) {
-                  bgColor = 'border-green-300 bg-green-50'
-                  iconColor = 'text-green-600'
-                  badge = <span className="text-[10px] text-green-700 font-medium">✓ Recibido</span>
-                } else if (subidoPendiente) {
-                  bgColor = 'border-amber-300 bg-amber-50'
-                  iconColor = 'text-amber-600'
-                  badge = <span className="text-[10px] text-amber-700 font-medium">📎 Subido (pendiente)</span>
-                }
-                
-                return (
-                  <div key={dt.tipo} className={`flex items-center justify-between rounded-md border p-2.5 text-sm ${bgColor}`}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileText className={`h-4 w-4 flex-shrink-0 ${iconColor}`} />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{dt.label}</span>
-                          {dt.required && <span className="text-destructive">*</span>}
-                          {badge}
-                        </div>
-                        {doc?.fileName && doc.fileName !== 'Recibido por WhatsApp' && (
-                          <span className="text-[10px] text-muted-foreground truncate block">{doc.fileName}</span>
-                        )}
-                        {tieneArchivo && (
-                          <button
-                            onClick={() => verDocumento(doc.id)}
-                            className="text-[10px] text-primary underline block cursor-pointer hover:text-primary/80"
-                          >
-                            Ver archivo (enlace válido 1 hora)
-                          </button>
-                        )}
-                      </div>
+              {expediente.documentos.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sin documentos cargados</p>
+              ) : (
+                expediente.documentos.map((d) => (
+                  <div key={d.id} className="flex items-center justify-between rounded-md border border-border p-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{d.tipo.replace(/_/g, ' ')}</span>
+                      <span className="text-xs text-muted-foreground">{d.fileName}</span>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                      <Button
-                        variant={recibido ? 'outline' : 'default'}
-                        size="sm"
-                        className={`h-7 text-xs ${recibido ? 'text-green-700 border-green-300' : 'bg-primary text-primary-foreground'}`}
-                        onClick={() => marcarDocumento(dt.tipo, !recibido)}
-                      >
-                        {recibido ? '✓ Recibido' : 'Marcar recibido'}
-                      </Button>
-                      {(recibido || subidoPendiente) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => marcarDocumento(dt.tipo, false)}
-                          title="Eliminar documento"
-                        >
-                          ✕
-                        </Button>
-                      )}
-                    </div>
+                    <Badge
+                      variant="secondary"
+                      className={
+                        d.valido === true ? 'bg-green-100 text-green-700' :
+                        d.valido === false ? 'bg-red-100 text-red-700' :
+                        'bg-amber-100 text-amber-700'
+                      }
+                    >
+                      {d.valido === true ? 'Válido' : d.valido === false ? 'Inválido' : 'Pendiente'}
+                    </Badge>
                   </div>
-                )
-              })}
+                ))
+              )}
             </CardContent>
           </Card>
 
@@ -1027,212 +912,301 @@ function DetalleExpediente({
   )
 }
 
-// ============================================================================
-// Vistas del sidebar
-// ============================================================================
-
-function VistaClientes({ expedientes, onVerDetalle }: { expedientes: ExpedienteListItem[]; onVerDetalle: (folio: string) => void }) {
-  const clientesUnicos = new Map<string, { nombre: string; email: string | null; telefono: string | null; canal: string; expedientes: number }>()
-  expedientes.forEach(e => {
-    const key = e.cliente.email || e.cliente.telefono || e.cliente.id
-    const existing = clientesUnicos.get(key)
-    if (existing) {
-      existing.expedientes++
-    } else {
-      clientesUnicos.set(key, {
-        nombre: e.cliente.nombreCompleto,
-        email: e.cliente.email,
-        telefono: e.cliente.telefono,
-        canal: e.cliente.canalLlegada,
-        expedientes: 1,
-      })
-    }
-  })
-  const clientes = Array.from(clientesUnicos.values())
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-xl font-bold mb-1">Clientes</h1>
-      <p className="text-sm text-muted-foreground mb-4">{clientes.length} cliente(s) registrado(s)</p>
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="border-b bg-muted/50">
-              <th className="text-left p-3 text-xs uppercase text-muted-foreground">Nombre</th>
-              <th className="text-left p-3 text-xs uppercase text-muted-foreground hidden sm:table-cell">Email</th>
-              <th className="text-left p-3 text-xs uppercase text-muted-foreground hidden md:table-cell">Teléfono</th>
-              <th className="text-left p-3 text-xs uppercase text-muted-foreground">Canal</th>
-              <th className="text-center p-3 text-xs uppercase text-muted-foreground">Expedientes</th>
-            </tr></thead>
-            <tbody>
-              {clientes.map((c, i) => (
-                <tr key={i} className="border-b border-border/50 hover:bg-muted/30">
-                  <td className="p-3 font-medium">{c.nombre}</td>
-                  <td className="p-3 text-xs hidden sm:table-cell">{c.email || '—'}</td>
-                  <td className="p-3 text-xs hidden md:table-cell">{c.telefono || '—'}</td>
-                  <td className="p-3"><Badge variant="outline" className="text-[10px]">{c.canal}</Badge></td>
-                  <td className="p-3 text-center font-medium">{c.expedientes}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </div>
-  )
-}
-
-function VistaDocumentos({ expedientes, onVerDetalle }: { expedientes: ExpedienteListItem[]; onVerDetalle: (folio: string) => void }) {
-  const conDocs = expedientes.filter(e => e.counts.documentos > 0)
-  return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-xl font-bold mb-1">Documentos</h1>
-      <p className="text-sm text-muted-foreground mb-4">Documentos recibidos a través del sistema</p>
-      {conDocs.length === 0 ? (
-        <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">No hay documentos subidos al sistema todavía. Los documentos que recibas por WhatsApp puedes marcarlos como recibidos desde la ficha de cada expediente.</CardContent></Card>
-      ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b bg-muted/50">
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Folio</th>
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Cliente</th>
-                <th className="text-center p-3 text-xs uppercase text-muted-foreground">Docs</th>
-                <th className="text-right p-3 text-xs uppercase text-muted-foreground">Acción</th>
-              </tr></thead>
-              <tbody>
-                {conDocs.map(e => (
-                  <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => onVerDetalle(e.folio)}>
-                    <td className="p-3 font-mono text-xs">{e.folio}</td>
-                    <td className="p-3">{e.cliente.nombreCompleto}</td>
-                    <td className="p-3 text-center">{e.counts.documentos}</td>
-                    <td className="p-3 text-right"><Button variant="ghost" size="sm" className="h-7 text-xs">Ver</Button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-    </div>
-  )
-}
-
-function VistaPagos({ expedientes, onVerDetalle }: { expedientes: ExpedienteListItem[]; onVerDetalle: (folio: string) => void }) {
-  const conPagos = expedientes.filter(e => e.counts.pagos > 0 || e.estado === 'LISTO_PARA_PAGO' || e.estado === 'PAGO_RECIBIDO')
-  return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-xl font-bold mb-1">Pagos</h1>
-      <p className="text-sm text-muted-foreground mb-4">Expedientes con pagos pendientes o confirmados</p>
-      {conPagos.length === 0 ? (
-        <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">No hay pagos registrados todavía.</CardContent></Card>
-      ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b bg-muted/50">
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Folio</th>
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Cliente</th>
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Estado</th>
-                <th className="text-right p-3 text-xs uppercase text-muted-foreground">Acción</th>
-              </tr></thead>
-              <tbody>
-                {conPagos.map(e => (
-                  <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => onVerDetalle(e.folio)}>
-                    <td className="p-3 font-mono text-xs">{e.folio}</td>
-                    <td className="p-3">{e.cliente.nombreCompleto}</td>
-                    <td className="p-3"><Badge className={`text-[10px] ${ESTADO_CONFIG[e.estado].color}`} variant="secondary">{ESTADO_CONFIG[e.estado].label}</Badge></td>
-                    <td className="p-3 text-right"><Button variant="ghost" size="sm" className="h-7 text-xs">Ver</Button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-    </div>
-  )
-}
-
-function VistaCitas({ expedientes, onVerDetalle }: { expedientes: ExpedienteListItem[]; onVerDetalle: (folio: string) => void }) {
-  const conCitas = expedientes.filter(e => ['LISTO_PARA_PAGO', 'PAGO_RECIBIDO', 'FINALIZADO'].includes(e.estado))
-  return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-xl font-bold mb-1">Citas</h1>
-      <p className="text-sm text-muted-foreground mb-4">Expedientes con cita consular asignada</p>
-      {conCitas.length === 0 ? (
-        <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">No hay citas asignadas todavía.</CardContent></Card>
-      ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b bg-muted/50">
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Folio</th>
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Cliente</th>
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Estado</th>
-                <th className="text-right p-3 text-xs uppercase text-muted-foreground">Acción</th>
-              </tr></thead>
-              <tbody>
-                {conCitas.map(e => (
-                  <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => onVerDetalle(e.folio)}>
-                    <td className="p-3 font-mono text-xs">{e.folio}</td>
-                    <td className="p-3">{e.cliente.nombreCompleto}</td>
-                    <td className="p-3"><Badge className={`text-[10px] ${ESTADO_CONFIG[e.estado].color}`} variant="secondary">{ESTADO_CONFIG[e.estado].label}</Badge></td>
-                    <td className="p-3 text-right"><Button variant="ghost" size="sm" className="h-7 text-xs">Ver</Button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-    </div>
-  )
-}
-
-function VistaAcciones({ expedientes, onVerDetalle }: { expedientes: ExpedienteListItem[]; onVerDetalle: (folio: string) => void }) {
-  const conAcciones = expedientes.filter(e => e.counts.acciones > 0).sort((a, b) => b.counts.acciones - a.counts.acciones)
-  return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-xl font-bold mb-1">Acciones (log)</h1>
-      <p className="text-sm text-muted-foreground mb-4">Historial de acciones del Motor de Acciones</p>
-      {conAcciones.length === 0 ? (
-        <Card><CardContent className="pt-6 text-center text-sm text-muted-foreground">No hay acciones registradas todavía.</CardContent></Card>
-      ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b bg-muted/50">
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Folio</th>
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Cliente</th>
-                <th className="text-left p-3 text-xs uppercase text-muted-foreground">Estado actual</th>
-                <th className="text-center p-3 text-xs uppercase text-muted-foreground">Acciones</th>
-                <th className="text-right p-3 text-xs uppercase text-muted-foreground">Ver detalle</th>
-              </tr></thead>
-              <tbody>
-                {conAcciones.map(e => (
-                  <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => onVerDetalle(e.folio)}>
-                    <td className="p-3 font-mono text-xs">{e.folio}</td>
-                    <td className="p-3">{e.cliente.nombreCompleto}</td>
-                    <td className="p-3"><Badge className={`text-[10px] ${ESTADO_CONFIG[e.estado].color}`} variant="secondary">{ESTADO_CONFIG[e.estado].label}</Badge></td>
-                    <td className="p-3 text-center font-medium">{e.counts.acciones}</td>
-                    <td className="p-3 text-right"><Button variant="ghost" size="sm" className="h-7 text-xs">Ver</Button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-    </div>
-  )
-}
-
 function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-2">
       <span className="text-muted-foreground text-xs">{label}</span>
       <span className="text-right text-xs font-medium">{value}</span>
     </div>
+  )
+}
+
+// ============================================================================
+// Ajustes — Cambio de contraseña y preferencias de cuenta
+// ============================================================================
+
+function AjustesPanel({ onVolver }: { onVolver: () => void }) {
+  const { data: session } = useSession()
+
+  const [passwordActual, setPasswordActual] = useState('')
+  const [passwordNuevo, setpasswordNuevo] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+
+  const [mostrarActual, setMostrarActual] = useState(false)
+  const [mostrarNuevo, setMostrarNuevo] = useState(false)
+  const [mostrarConfirm, setMostrarConfirm] = useState(false)
+
+  const [guardando, setGuardando] = useState(false)
+  const [exito, setExito] = useState(false)
+
+  // Validación en vivo
+  const validaciones = {
+    longitud: passwordNuevo.length >= 8,
+    letra: /[A-Za-z]/.test(passwordNuevo),
+    numero: /[0-9]/.test(passwordNuevo),
+    coincide: passwordNuevo.length > 0 && passwordNuevo === passwordConfirm,
+    actualLlena: passwordActual.length > 0,
+  }
+  const formularioValido =
+    validaciones.actualLlena &&
+    validaciones.longitud &&
+    validaciones.letra &&
+    validaciones.numero &&
+    validaciones.coincide
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formularioValido || guardando) return
+
+    setGuardando(true)
+    setExito(false)
+    try {
+      const res = await fetch('/api/auth/cambiar-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passwordActual,
+          passwordNuevo,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al cambiar la contraseña')
+      }
+      toast.success('Contraseña actualizada', {
+        description: 'Usa la nueva contraseña la próxima vez que inicies sesión.',
+      })
+      setExito(true)
+      setPasswordActual('')
+      setpasswordNuevo('')
+      setPasswordConfirm('')
+    } catch (err) {
+      toast.error('No se pudo cambiar la contraseña', {
+        description: err instanceof Error ? err.message : 'Intenta nuevamente',
+      })
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6 max-w-3xl mx-auto">
+      {/* Encabezado */}
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+          <Settings className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold">Ajustes</h1>
+          <p className="text-sm text-muted-foreground">
+            Administra tu cuenta y preferencias del panel
+          </p>
+        </div>
+      </div>
+
+      {/* Tarjeta de cuenta */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <UserCircle className="h-4 w-4 text-muted-foreground" />
+            Cuenta
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <DataRow label="Nombre" value={session?.user?.name ?? '—'} />
+          <DataRow label="Email" value={session?.user?.email ?? '—'} />
+          <DataRow label="Rol" value={(session?.user as any)?.role ?? '—'} />
+        </CardContent>
+      </Card>
+
+      {/* Cambio de contraseña */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <KeyRound className="h-4 w-4 text-muted-foreground" />
+            Cambiar contraseña
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Contraseña actual */}
+            <div className="space-y-1.5">
+              <label htmlFor="pwd-actual" className="text-sm font-medium flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                Contraseña actual
+              </label>
+              <div className="relative">
+                <Input
+                  id="pwd-actual"
+                  type={mostrarActual ? 'text' : 'password'}
+                  value={passwordActual}
+                  onChange={(e) => {
+                    setPasswordActual(e.target.value)
+                    setExito(false)
+                  }}
+                  placeholder="Tu contraseña actual"
+                  autoComplete="current-password"
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarActual(!mostrarActual)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                  aria-label={mostrarActual ? 'Ocultar' : 'Mostrar'}
+                >
+                  {mostrarActual ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Nueva contraseña */}
+            <div className="space-y-1.5">
+              <label htmlFor="pwd-nuevo" className="text-sm font-medium flex items-center gap-1.5">
+                <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
+                Nueva contraseña
+              </label>
+              <div className="relative">
+                <Input
+                  id="pwd-nuevo"
+                  type={mostrarNuevo ? 'text' : 'password'}
+                  value={passwordNuevo}
+                  onChange={(e) => {
+                    setpasswordNuevo(e.target.value)
+                    setExito(false)
+                  }}
+                  placeholder="Mínimo 8 caracteres, letras y números"
+                  autoComplete="new-password"
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarNuevo(!mostrarNuevo)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                  aria-label={mostrarNuevo ? 'Ocultar' : 'Mostrar'}
+                >
+                  {mostrarNuevo ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {/* Indicadores de fortaleza */}
+              {passwordNuevo.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <FortalezaItem ok={validaciones.longitud} label="Mínimo 8 caracteres" />
+                  <FortalezaItem ok={validaciones.letra} label="Incluye letras" />
+                  <FortalezaItem ok={validaciones.numero} label="Incluye números" />
+                </div>
+              )}
+            </div>
+
+            {/* Confirmar nueva */}
+            <div className="space-y-1.5">
+              <label htmlFor="pwd-confirm" className="text-sm font-medium flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                Confirmar nueva contraseña
+              </label>
+              <div className="relative">
+                <Input
+                  id="pwd-confirm"
+                  type={mostrarConfirm ? 'text' : 'password'}
+                  value={passwordConfirm}
+                  onChange={(e) => {
+                    setPasswordConfirm(e.target.value)
+                    setExito(false)
+                  }}
+                  placeholder="Repite la nueva contraseña"
+                  autoComplete="new-password"
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarConfirm(!mostrarConfirm)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                  aria-label={mostrarConfirm ? 'Ocultar' : 'Mostrar'}
+                >
+                  {mostrarConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {passwordConfirm.length > 0 && !validaciones.coincide && (
+                <p className="text-xs text-destructive mt-1">Las contraseñas no coinciden</p>
+              )}
+            </div>
+
+            {/* Mensaje de éxito */}
+            {exito && (
+              <div className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900 p-3">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <div className="text-xs">
+                  <p className="font-medium text-emerald-900 dark:text-emerald-200">
+                    Contraseña actualizada correctamente
+                  </p>
+                  <p className="text-emerald-700 dark:text-emerald-300 mt-0.5">
+                    La próxima vez que inicies sesión usa tu nueva contraseña.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Botones */}
+            <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onVolver}
+                className="sm:w-auto"
+              >
+                Volver
+              </Button>
+              <Button
+                type="submit"
+                disabled={!formularioValido || guardando}
+                className="sm:flex-1 bg-primary text-primary-foreground"
+              >
+                {guardando ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <KeyRound className="h-4 w-4 mr-2" />
+                    Cambiar contraseña
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Nota de seguridad */}
+            <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-md p-3 mt-2">
+              <ShieldCheck className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              <p>
+                Por seguridad, te pediremos la contraseña actual para verificar tu identidad.
+                La nueva contraseña se guarda hasheada con bcrypt y nunca se envía por correo.
+                Si la olvidas, un administrador con acceso al servidor puede restablecerla
+                directamente en la base de datos.
+              </p>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function FortalezaItem({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
+        ok
+          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+          : 'bg-muted text-muted-foreground'
+      }`}
+    >
+      {ok ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+      {label}
+    </span>
   )
 }
