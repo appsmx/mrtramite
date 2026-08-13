@@ -29,6 +29,7 @@ import {
   EyeOff,
   Lock,
   UserCircle,
+  Mail,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -926,8 +927,9 @@ function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
 // ============================================================================
 
 function AjustesPanel({ onVolver }: { onVolver: () => void }) {
-  const { data: session } = useSession()
+  const { data: session, update: updateSession } = useSession()
 
+  // ----- Estado del formulario de CONTRASEÑA -----
   const [passwordActual, setPasswordActual] = useState('')
   const [passwordNuevo, setpasswordNuevo] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
@@ -936,10 +938,18 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
   const [mostrarNuevo, setMostrarNuevo] = useState(false)
   const [mostrarConfirm, setMostrarConfirm] = useState(false)
 
-  const [guardando, setGuardando] = useState(false)
-  const [exito, setExito] = useState(false)
+  const [guardandoPwd, setGuardandoPwd] = useState(false)
+  const [exitoPwd, setExitoPwd] = useState(false)
 
-  // Validación en vivo
+  // ----- Estado del formulario de CUENTA (email + nombre) -----
+  const [cuentaPassword, setCuentaPassword] = useState('')
+  const [mostrarCuentaPwd, setMostrarCuentaPwd] = useState(false)
+  const [emailNuevo, setEmailNuevo] = useState('')
+  const [nombreNuevo, setNombreNuevo] = useState('')
+  const [guardandoCuenta, setGuardandoCuenta] = useState(false)
+  const [exitoCuenta, setExitoCuenta] = useState<null | { mensaje: string; necesitaRelogin: boolean }>(null)
+
+  // Validación en vivo del password
   const validaciones = {
     longitud: passwordNuevo.length >= 8,
     letra: /[A-Za-z]/.test(passwordNuevo),
@@ -954,12 +964,25 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
     validaciones.numero &&
     validaciones.coincide
 
+  // Validación en vivo de cuenta
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const emailOriginal = (session?.user?.email as string) || ''
+  const nombreOriginal = (session?.user?.name as string) || ''
+  const emailNormalizado = emailNuevo.trim().toLowerCase()
+  const nombreNormalizado = nombreNuevo.trim()
+  const hayCambiosCuenta =
+    (emailNormalizado.length > 0 && emailNormalizado !== emailOriginal.toLowerCase()) ||
+    (nombreNormalizado.length > 0 && nombreNormalizado !== nombreOriginal)
+  const emailValido = emailNormalizado.length === 0 || EMAIL_REGEX.test(emailNormalizado)
+  const cuentaFormValida =
+    cuentaPassword.length > 0 && hayCambiosCuenta && emailValido
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formularioValido || guardando) return
+    if (!formularioValido || guardandoPwd) return
 
-    setGuardando(true)
-    setExito(false)
+    setGuardandoPwd(true)
+    setExitoPwd(false)
     try {
       const res = await fetch('/api/auth/cambiar-password', {
         method: 'POST',
@@ -976,7 +999,7 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
       toast.success('Contraseña actualizada', {
         description: 'Usa la nueva contraseña la próxima vez que inicies sesión.',
       })
-      setExito(true)
+      setExitoPwd(true)
       setPasswordActual('')
       setpasswordNuevo('')
       setPasswordConfirm('')
@@ -985,7 +1008,56 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
         description: err instanceof Error ? err.message : 'Intenta nuevamente',
       })
     } finally {
-      setGuardando(false)
+      setGuardandoPwd(false)
+    }
+  }
+
+  // ----- Handler para actualizar CUENTA (email / nombre) -----
+  const handleActualizarCuenta = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!cuentaFormValida || guardandoCuenta) return
+
+    setGuardandoCuenta(true)
+    setExitoCuenta(null)
+    try {
+      const res = await fetch('/api/auth/actualizar-cuenta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passwordActual: cuentaPassword,
+          emailNuevo: emailNormalizado || undefined,
+          nombreNuevo: nombreNormalizado || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al actualizar la cuenta')
+      }
+      setExitoCuenta({
+        mensaje: data.mensaje || 'Cuenta actualizada',
+        necesitaRelogin: data.necesitaRelogin === true,
+      })
+      // Limpiar campos
+      setCuentaPassword('')
+      setEmailNuevo('')
+      setNombreNuevo('')
+      // Forzar refresh de la sesión para que se actualice el email/nombre en el topbar
+      try {
+        await updateSession({ force: true } as any)
+      } catch {}
+      if (data.necesitaRelogin) {
+        toast.warning('Email actualizado', {
+          description: 'Cierra sesión y vuelve a entrar con el nuevo email.',
+        })
+      } else {
+        toast.success('Cuenta actualizada')
+      }
+    } catch (err) {
+      toast.error('No se pudo actualizar la cuenta', {
+        description: err instanceof Error ? err.message : 'Intenta nuevamente',
+      })
+    } finally {
+      setGuardandoCuenta(false)
     }
   }
 
@@ -1004,7 +1076,7 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
         </div>
       </div>
 
-      {/* Tarjeta de cuenta */}
+      {/* Tarjeta de cuenta — lectura */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -1016,6 +1088,194 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
           <DataRow label="Nombre" value={session?.user?.name ?? '—'} />
           <DataRow label="Email" value={session?.user?.email ?? '—'} />
           <DataRow label="Rol" value={(session?.user as any)?.role ?? '—'} />
+        </CardContent>
+      </Card>
+
+      {/* Cambio de email / nombre */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <UserCircle className="h-4 w-4 text-muted-foreground" />
+            Cambiar email o nombre
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleActualizarCuenta} className="space-y-4">
+            {/* Email actual (lectura) */}
+            <div className="rounded-md bg-muted/50 p-3 space-y-1.5">
+              <div className="text-[11px] text-muted-foreground">Email actual</div>
+              <div className="text-sm font-medium">{emailOriginal || '—'}</div>
+              <div className="text-[11px] text-muted-foreground">Nombre actual: {nombreOriginal || '—'}</div>
+            </div>
+
+            {/* Nuevo nombre */}
+            <div className="space-y-1.5">
+              <label htmlFor="cuenta-nombre" className="text-sm font-medium flex items-center gap-1.5">
+                <UserCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                Nuevo nombre <span className="text-muted-foreground text-xs">(opcional)</span>
+              </label>
+              <Input
+                id="cuenta-nombre"
+                type="text"
+                value={nombreNuevo}
+                onChange={(e) => {
+                  setNombreNuevo(e.target.value)
+                  setExitoCuenta(null)
+                }}
+                placeholder={nombreOriginal || 'Tu nombre'}
+                autoComplete="name"
+                maxLength={100}
+              />
+            </div>
+
+            {/* Nuevo email */}
+            <div className="space-y-1.5">
+              <label htmlFor="cuenta-email" className="text-sm font-medium flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                Nuevo email <span className="text-muted-foreground text-xs">(opcional)</span>
+              </label>
+              <Input
+                id="cuenta-email"
+                type="email"
+                value={emailNuevo}
+                onChange={(e) => {
+                  setEmailNuevo(e.target.value)
+                  setExitoCuenta(null)
+                }}
+                placeholder={emailOriginal || 'tu@correo.com'}
+                autoComplete="email"
+                className={!emailValido ? 'border-destructive' : ''}
+              />
+              {!emailValido && (
+                <p className="text-xs text-destructive mt-1">El email no tiene un formato válido</p>
+              )}
+              <p className="text-[11px] text-muted-foreground">
+                Cuando tengas tu dominio <code className="bg-muted px-1 rounded">mrtramite.mx</code>,
+                aquí podrás cambiarlo a <code className="bg-muted px-1 rounded">contacto@mrtramite.mx</code> o
+                <code className="bg-muted px-1 rounded ml-1">julian@mrtramite.mx</code>.
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Contraseña para confirmar */}
+            <div className="space-y-1.5">
+              <label htmlFor="cuenta-pwd" className="text-sm font-medium flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                Contraseña actual <span className="text-destructive">*</span>
+              </label>
+              <div className="relative">
+                <Input
+                  id="cuenta-pwd"
+                  type={mostrarCuentaPwd ? 'text' : 'password'}
+                  value={cuentaPassword}
+                  onChange={(e) => {
+                    setCuentaPassword(e.target.value)
+                    setExitoCuenta(null)
+                  }}
+                  placeholder="Confirma tu contraseña para guardar cambios"
+                  autoComplete="current-password"
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarCuentaPwd(!mostrarCuentaPwd)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                  aria-label={mostrarCuentaPwd ? 'Ocultar' : 'Mostrar'}
+                >
+                  {mostrarCuentaPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Pedimos tu contraseña por seguridad antes de cambiar datos sensibles.
+              </p>
+            </div>
+
+            {/* Mensaje de éxito */}
+            {exitoCuenta && (
+              <div
+                className={`flex items-start gap-2 rounded-md border p-3 ${
+                  exitoCuenta.necesitaRelogin
+                    ? 'border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900'
+                    : 'border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900'
+                }`}
+              >
+                {exitoCuenta.necesitaRelogin ? (
+                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                )}
+                <div className="text-xs">
+                  <p
+                    className={`font-medium ${
+                      exitoCuenta.necesitaRelogin
+                        ? 'text-amber-900 dark:text-amber-200'
+                        : 'text-emerald-900 dark:text-emerald-200'
+                    }`}
+                  >
+                    {exitoCuenta.necesitaRelogin ? 'Email actualizado — reinicio requerido' : 'Cuenta actualizada'}
+                  </p>
+                  <p
+                    className={`mt-0.5 ${
+                      exitoCuenta.necesitaRelogin
+                        ? 'text-amber-700 dark:text-amber-300'
+                        : 'text-emerald-700 dark:text-emerald-300'
+                    }`}
+                  >
+                    {exitoCuenta.mensaje}
+                  </p>
+                  {exitoCuenta.necesitaRelogin && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="mt-2 h-7 text-xs"
+                      onClick={() => signOut({ callbackUrl: '/' })}
+                    >
+                      <LogOut className="h-3 w-3 mr-1" />
+                      Cerrar sesión ahora
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Botones */}
+            <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onVolver}
+                className="sm:w-auto"
+              >
+                Volver
+              </Button>
+              <Button
+                type="submit"
+                disabled={!cuentaFormValida || guardandoCuenta}
+                className="sm:flex-1 bg-primary text-primary-foreground"
+              >
+                {guardandoCuenta ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <UserCircle className="h-4 w-4 mr-2" />
+                    Actualizar cuenta
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {!hayCambiosCuenta && (emailNuevo.length > 0 || nombreNuevo.length > 0) && (
+              <p className="text-[11px] text-muted-foreground text-center">
+                Los valores que escribiste son iguales a los actuales.
+              </p>
+            )}
+          </form>
         </CardContent>
       </Card>
 
@@ -1042,7 +1302,7 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
                   value={passwordActual}
                   onChange={(e) => {
                     setPasswordActual(e.target.value)
-                    setExito(false)
+                    setExitoPwd(false)
                   }}
                   placeholder="Tu contraseña actual"
                   autoComplete="current-password"
@@ -1075,7 +1335,7 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
                   value={passwordNuevo}
                   onChange={(e) => {
                     setpasswordNuevo(e.target.value)
-                    setExito(false)
+                    setExitoPwd(false)
                   }}
                   placeholder="Mínimo 8 caracteres, letras y números"
                   autoComplete="new-password"
@@ -1114,7 +1374,7 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
                   value={passwordConfirm}
                   onChange={(e) => {
                     setPasswordConfirm(e.target.value)
-                    setExito(false)
+                    setExitoPwd(false)
                   }}
                   placeholder="Repite la nueva contraseña"
                   autoComplete="new-password"
@@ -1136,7 +1396,7 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
             </div>
 
             {/* Mensaje de éxito */}
-            {exito && (
+            {exitoPwd && (
               <div className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900 p-3">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
                 <div className="text-xs">
@@ -1162,10 +1422,10 @@ function AjustesPanel({ onVolver }: { onVolver: () => void }) {
               </Button>
               <Button
                 type="submit"
-                disabled={!formularioValido || guardando}
+                disabled={!formularioValido || guardandoPwd}
                 className="sm:flex-1 bg-primary text-primary-foreground"
               >
-                {guardando ? (
+                {guardandoPwd ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     Guardando...
