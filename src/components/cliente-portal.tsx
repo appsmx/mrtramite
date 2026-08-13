@@ -17,7 +17,6 @@ import {
   Download,
   ArrowRight,
   MapPin,
-  Upload,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -50,9 +49,7 @@ interface ExpedienteCliente {
     id: string
     tipo: string
     fileName: string
-    filePath: string
     valido: boolean | null
-    subidoPorCliente: boolean
   }>
   pagos: Array<{
     id: string
@@ -98,6 +95,7 @@ export function ClientePortal() {
   const router = useRouter()
   const [expediente, setExpediente] = useState<ExpedienteCliente | null>(null)
   const [loading, setLoading] = useState(true)
+  const [generandoPago, setGenerandoPago] = useState(false)
 
   const folio = (session?.user as any)?.folio
 
@@ -128,15 +126,39 @@ export function ClientePortal() {
     if (folio) cargarExpediente()
   }, [folio, cargarExpediente])
 
-  const handleEnviarComprobante = () => {
-    const WHATSAPP_NUMBER = '526642342946'
-    const mensaje = encodeURIComponent(
-      `Hola Mr. Trámite, soy ${expediente?.cliente?.nombreCompleto || ''}. ` +
-      `Mi folio es ${folio}. ` +
-      `Ya realicé el pago de $${expediente?.tramiteTipo?.precio || 800} MXN. ` +
-      `Adjunto mi comprobante de pago:`
-    )
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${mensaje}`, '_blank')
+  const handlePagar = async () => {
+    if (!folio || generandoPago) return
+    setGenerandoPago(true)
+    try {
+      toast.info('Generando link de pago...', {
+        description: 'Te redirigiremos a Mercado Pago en un momento',
+      })
+      const res = await fetch('/api/mercado-pago/preferencia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folio }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al generar el link de pago')
+      }
+      // Redirigir al checkout de Mercado Pago
+      // initPoint es la URL de producción, sandboxInitPoint es la de pruebas
+      const checkoutUrl = data.initPoint || data.sandboxInitPoint
+      if (!checkoutUrl) {
+        throw new Error('Mercado Pago no devolvió una URL de checkout')
+      }
+      toast.success('Redirigiendo a Mercado Pago...')
+      // Pequeña pausa para que el toast se vea
+      setTimeout(() => {
+        window.location.href = checkoutUrl
+      }, 600)
+    } catch (err) {
+      toast.error('No pudimos generar el link de pago', {
+        description: err instanceof Error ? err.message : 'Intenta nuevamente',
+      })
+      setGenerandoPago(false)
+    }
   }
 
   if (status === 'loading' || loading) {
@@ -285,9 +307,9 @@ export function ClientePortal() {
                   <CreditCard className="h-5 w-5" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm">¡Tu cita está lista! Procede al pago</h3>
+                  <h3 className="font-semibold text-sm">¡Tu cita está lista!</h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Realiza el pago de <strong>${expediente.tramiteTipo.precio} MXN</strong> por transferencia y luego envía tu comprobante por WhatsApp.
+                    Procede al pago de <strong>${expediente.tramiteTipo.precio} MXN</strong> para confirmar tu cita.
                   </p>
                   {expediente.citaFecha && (
                     <div className="mt-2 text-xs space-y-0.5 bg-card/50 rounded-md p-2 border border-border/50">
@@ -303,27 +325,26 @@ export function ClientePortal() {
                       )}
                     </div>
                   )}
-
-                  {/* Datos para transferencia */}
-                  <div className="mt-3 rounded-md border border-border bg-card p-3 text-xs space-y-1">
-                    <p className="font-semibold text-foreground mb-1">Datos para transferencia:</p>
-                    <p><span className="text-muted-foreground">Banco:</span> HSBC</p>
-                    <p><span className="text-muted-foreground">Titular:</span> Julian Rangel Quiñonez</p>
-                    <p><span className="text-muted-foreground">Cuenta:</span> 6620535019</p>
-                    <p><span className="text-muted-foreground">CLABE:</span> 021028066205350194</p>
-                    <p><span className="text-muted-foreground">Concepto:</span> {folio}</p>
-                  </div>
-
-                  {/* Botón WhatsApp para enviar comprobante */}
-                  <button
-                    onClick={handleEnviarComprobante}
-                    className="flex items-center justify-center gap-2 w-full rounded-lg bg-[#25D366] text-white font-medium text-sm py-2.5 mt-3 hover:bg-[#1da851] transition-colors"
+                  <Button
+                    onClick={handlePagar}
+                    disabled={generandoPago}
+                    className="w-full mt-3 bg-primary text-primary-foreground"
+                    size="sm"
                   >
-                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                    Ya pagué, enviar comprobante por WhatsApp
-                  </button>
+                    {generandoPago ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                        Generando link...
+                      </>
+                    ) : (
+                      <>
+                        Pagar ${expediente.tramiteTipo.precio} MXN
+                        <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                      </>
+                    )}
+                  </Button>
                   <p className="text-[10px] text-muted-foreground text-center mt-1.5">
-                    Después de enviar tu comprobante, Mr. Trámite confirmará tu pago.
+                    Pago seguro vía Mercado Pago · Tarjeta o transferencia
                   </p>
                 </div>
               </div>
@@ -347,170 +368,6 @@ export function ClientePortal() {
             </CardContent>
           </Card>
         )}
-
-        {/* Documentos faltantes (cuando estado = DOCS_INCOMPLETOS) */}
-        {expediente.estado === 'DOCS_INCOMPLETOS' && (() => {
-          const DOC_REQUERIDOS = [
-            { tipo: 'PASAPORTE', label: 'Pasaporte vigente' },
-            { tipo: 'ACTA_NACIMIENTO', label: 'Acta de nacimiento' },
-            { tipo: 'FOTO_PASAPORTE', label: 'Foto tipo pasaporte' },
-            { tipo: 'COMPROBANTE_DOMICILIO', label: 'Comprobante de domicilio' },
-            { tipo: 'ACTA_MATRIMONIO', label: 'Acta de matrimonio' },
-            { tipo: 'RECIBOS_INGRESOS', label: 'Comprobantes de ingresos' },
-          ]
-          // Un documento se considera "no faltante" si existe en la DB (sin importar si está validado o no)
-          const docsEnSistema = expediente.documentos.map(d => d.tipo)
-          const docsFaltantes = DOC_REQUERIDOS.filter(dt => !docsEnSistema.includes(dt.tipo))
-          
-          return (
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="pt-5">
-                <h3 className="font-semibold text-sm flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                  Documentos faltantes
-                </h3>
-                <p className="text-xs text-red-700 mt-1 mb-3">
-                  Necesitamos que envíes los siguientes documentos para continuar con tu trámite. Puedes subirlos aquí o enviarlos por WhatsApp:
-                </p>
-                <div className="space-y-2">
-                  {DOC_REQUERIDOS.map((dt) => {
-                    const doc = expediente.documentos.find(d => d.tipo === dt.tipo)
-                    const yaSubido = !!doc
-                    if (yaSubido) {
-                      // Ya subido, mostrar como subido + opción de reemplazar
-                      return (
-                        <div key={dt.tipo} className="flex items-center justify-between bg-green-50 rounded-md p-2.5 border border-green-200">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs font-medium">{dt.label}</span>
-                              {doc?.fileName && doc.fileName !== 'Recibido por WhatsApp' && (
-                                <span className="text-[10px] text-muted-foreground truncate block">{doc.fileName}</span>
-                              )}
-                              <span className="text-[10px] text-green-700 font-medium block">
-                                ✓ Subido {doc?.valido === true ? '(aprobado)' : '(pendiente de revisión)'}
-                              </span>
-                            </div>
-                          </div>
-                          <label className="cursor-pointer flex-shrink-0 ml-2">
-                            <input
-                              type="file"
-                              accept=".pdf,.jpg,.jpeg,.png"
-                              className="sr-only"
-                              onChange={async (e) => {
-                                const file = e.target.files?.[0]
-                                if (!file) return
-                                if (file.size > 4 * 1024 * 1024) {
-                                  toast.error('Archivo demasiado grande', { description: 'Máximo 4MB. Si es más grande, envíalo por WhatsApp.' })
-                                  return
-                                }
-                                toast.info('Reemplazando documento...', { description: file.name })
-                                try {
-                                  const formData = new FormData()
-                                  formData.append('file', file)
-                                  formData.append('tipo', dt.tipo)
-                                  const res = await fetch(`/api/expedientes/${folio}/documentos`, {
-                                    method: 'PUT',
-                                    body: formData,
-                                  })
-                                  if (!res.ok) {
-                                    const err = await res.json().catch(() => ({}))
-                                    throw new Error(err.error || 'Error')
-                                  }
-                                  toast.success('Documento reemplazado', { description: `${dt.label} actualizado correctamente.` })
-                                  cargarExpediente()
-                                } catch (err) {
-                                  toast.error('Error al reemplazar', { description: err instanceof Error ? err.message : 'Intenta por WhatsApp' })
-                                }
-                              }}
-                            />
-                            <span className="flex items-center gap-1 text-[10px] bg-amber-100 text-amber-700 border border-amber-300 px-2 py-1 rounded-md hover:bg-amber-200 transition-colors">
-                              <Upload className="h-3 w-3" />
-                              Reemplazar
-                            </span>
-                          </label>
-                        </div>
-                      )
-                    }
-                    // Faltante, mostrar botón de subir
-                    return (
-                      <div key={dt.tipo} className="flex items-center justify-between bg-white/50 rounded-md p-2.5 border border-red-200">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-3.5 w-3.5 text-red-600" />
-                          <span className="text-xs font-medium">{dt.label}</span>
-                        </div>
-                        <label className="cursor-pointer">
-                          <input
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            className="sr-only"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0]
-                              if (!file) return
-                              if (file.size > 4 * 1024 * 1024) {
-                                toast.error('Archivo demasiado grande', { description: 'Máximo 4MB. Si es más grande, envíalo por WhatsApp.' })
-                                return
-                              }
-                              toast.info('Subiendo documento...', { description: file.name })
-                              try {
-                                const formData = new FormData()
-                                formData.append('file', file)
-                                formData.append('tipo', dt.tipo)
-                                const res = await fetch(`/api/expedientes/${folio}/documentos`, {
-                                  method: 'PUT',
-                                  body: formData,
-                                })
-                                if (!res.ok) {
-                                  const err = await res.json().catch(() => ({}))
-                                  throw new Error(err.error || 'Error')
-                                }
-                                toast.success('Documento subido', { description: `${dt.label} enviado. Pendiente de revisión por Mr. Trámite.` })
-                                cargarExpediente()
-                              } catch (err) {
-                                toast.error('Error al subir documento', { description: err instanceof Error ? err.message : 'Intenta por WhatsApp' })
-                              }
-                            }}
-                          />
-                          <span className="flex items-center gap-1 text-xs bg-primary text-primary-foreground px-2.5 py-1 rounded-md hover:bg-primary/90 transition-colors">
-                            <Upload className="h-3 w-3" />
-                            Subir
-                          </span>
-                        </label>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Solo mostrar botón WhatsApp si hay documentos realmente faltantes */}
-                {docsFaltantes.length > 0 && (
-                  <>
-                    <div className="flex items-center gap-2 my-3">
-                      <div className="flex-1 h-px bg-red-200" />
-                      <span className="text-[10px] text-red-600 font-medium">O BIEN</span>
-                      <div className="flex-1 h-px bg-red-200" />
-                    </div>
-                    <button
-                      onClick={() => {
-                        const WHATSAPP_NUMBER = '526642342946'
-                        const listaDocs = docsFaltantes.map(d => d.label).join(', ')
-                        const mensaje = encodeURIComponent(
-                          `Hola Mr. Trámite, soy ${expediente.cliente?.nombreCompleto || ''}. ` +
-                          `Mi folio es ${folio}. ` +
-                          `Envío los documentos faltantes: ${listaDocs}`
-                        )
-                        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${mensaje}`, '_blank')
-                      }}
-                      className="flex items-center justify-center gap-2 w-full rounded-lg bg-[#25D366] text-white font-medium text-sm py-2 hover:bg-[#1da851] transition-colors"
-                    >
-                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                      Enviar documentos por WhatsApp
-                    </button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })()}
 
         {/* Documentos */}
         <Card>

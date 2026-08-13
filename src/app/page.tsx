@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { Landing } from '@/components/landing'
 import { Wizard } from '@/components/wizard/wizard'
 import { AdminPanel } from '@/components/admin-panel'
 import { ClientePortal } from '@/components/cliente-portal'
 
-export default function Home() {
+function HomeContent() {
   const { data: session } = useSession()
   const [view, setView] = useState<'landing' | 'wizard'>('landing')
 
@@ -28,4 +28,12 @@ export default function Home() {
   }
 
   return <Landing onStartTramite={() => setView('wizard')} />
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
+  )
 }

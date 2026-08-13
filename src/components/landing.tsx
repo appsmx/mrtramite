@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 import {
   ShieldCheck,
   ClipboardList,
@@ -35,6 +36,34 @@ export function Landing({ onStartTramite }: LandingProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [avisoOpen, setAvisoOpen] = useState(false)
   const [terminosOpen, setTerminosOpen] = useState(false)
+  const searchParams = useSearchParams()
+
+  // Mostrar toast cuando el cliente regresa de Mercado Pago
+  useEffect(() => {
+    const pagoStatus = searchParams.get('pago')
+    const folio = searchParams.get('folio')
+    if (!pagoStatus) return
+
+    if (pagoStatus === 'success') {
+      toast.success('¡Pago recibido!', {
+        description: folio
+          ? `Tu pago para el folio ${folio} está siendo procesado. Te avisaremos cuando se confirme.`
+          : 'Tu pago está siendo procesado.',
+      })
+    } else if (pagoStatus === 'pending') {
+      toast.info('Pago pendiente', {
+        description: folio
+          ? `Tu pago para ${folio} está pendiente. Te avisaremos cuando se complete.`
+          : 'Tu pago está pendiente de confirmación.',
+      })
+    } else if (pagoStatus === 'failure') {
+      toast.error('El pago no se completó', {
+        description: folio
+          ? `No se completó el pago para ${folio}. Puedes intentarlo nuevamente desde tu portal.`
+          : 'Puedes intentarlo nuevamente desde tu portal.',
+      })
+    }
+  }, [searchParams])
 
   const handleStartTramite = () => {
     onStartTramite()
@@ -529,20 +558,6 @@ export function Landing({ onStartTramite }: LandingProps) {
           <div className="flex flex-col items-center justify-between gap-3 text-xs text-background/60 sm:flex-row">
             <p>© 2026 Mr. Trámite. Todos los derechos reservados.</p>
             <p>Hecho en México 🇲🇽</p>
-          </div>
-
-          {/* Powered by LOGAN */}
-          <div className="mt-4 flex items-center justify-center gap-1.5 border-t border-background/10 pt-4">
-            <span className="text-[10px] text-background/40">Powered by</span>
-            <a
-              href="https://github.com/appsmx/logan"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] font-semibold text-background/60 hover:text-background/90 transition-colors"
-            >
-              LOGAN
-            </a>
-            <span className="text-[10px] text-background/40">· Learning, Organization, Governance, Architecture &amp; Navigation</span>
           </div>
         </div>
       </footer>
