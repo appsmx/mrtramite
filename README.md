@@ -64,3 +64,16 @@ Este proyecto sigue **LOGAN** (Learning, Organization, Governance, Architecture 
 ---
 
 *Mr. Trámite © 2026 — Gestoría profesional de trámites*
+
+## Deploy 2026-08-13
+
+Cambios activos en este deploy:
+- DEC-018: Cambio de contraseña desde panel admin (vista Ajustes)
+- DEC-019: Chat widget LOGAN OS (burbuja flotante)
+- DEC-020: Mercado Pago real integrado
+- DEC-021: Cambio de email y nombre desde panel admin
+
+Variables de entorno requeridas en Vercel:
+- MERCADO_PAGO_ACCESS_TOKEN (pagos)
+- MERCADO_PAGO_WEBHOOK_SECRET (validar firma webhook)
+- NEXTAUTH_URL (https://mrtramite.vercel.app)
