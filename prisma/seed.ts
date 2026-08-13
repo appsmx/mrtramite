@@ -1,7 +1,7 @@
 // Seed inicial para Mr. Trámite
 // Crea: módulo Visa activo, usuario admin, y valida que las relaciones funcionen.
 
-import { db } from '../lib/db'
+import { db } from '../src/lib/db'
 
 async function main() {
   console.log('🌱 Iniciando seed...')

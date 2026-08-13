@@ -38,9 +38,8 @@
   ],
   "exclude": [
     "node_modules",
-    "mrtramite-repo",
-    "logan-repo",
-    "mini-services",
+    "prisma",
+    "schema",
     "examples",
     "tests",
     "skills"

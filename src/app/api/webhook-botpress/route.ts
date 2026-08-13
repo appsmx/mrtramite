@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Buscar o crear cliente
-    let cliente = null
+    let cliente: Awaited<ReturnType<typeof db.cliente.findFirst>> = null
     if (email) {
       cliente = await db.cliente.findFirst({ where: { email } })
     }
@@ -120,6 +120,11 @@ export async function POST(request: NextRequest) {
           telefono: body.telefono || cliente.telefono,
         },
       })
+    }
+
+    // TypeScript no hace narrowing automático al reasignar — afirmamos que no es null
+    if (!cliente) {
+      throw new Error('No se pudo crear ni actualizar el cliente')
     }
 
     // 2. Buscar tipo de trámite (Visa por defecto)
