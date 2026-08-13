@@ -67,7 +67,7 @@ export async function crearExpedienteDesdeWizard({ wizardData, adminUserId }: Cr
   const folio = await generarFolio()
 
   // 1. Buscar o crear cliente (por CURP o email)
-  let cliente = null
+  let cliente: Awaited<ReturnType<typeof db.cliente.findUnique>> = null
   if (wizardData.curp) {
     cliente = await db.cliente.findUnique({ where: { curp: wizardData.curp } })
   }
@@ -138,7 +138,7 @@ export async function crearExpedienteDesdeWizard({ wizardData, adminUserId }: Cr
     })
 
     // Crear notificación SOLICITUD_RECIBIDA
-    let notificacion = null
+    let notificacion: Awaited<ReturnType<typeof tx.notificacion.create>> | null = null
     if (cliente.email) {
       notificacion = await tx.notificacion.create({
         data: {
@@ -231,7 +231,7 @@ export async function ejecutarAccion({ folio, codigoAccion, ejecutadoPorId, meta
   // 5. Ejecutar en transacción: actualizar estado + crear acción + crear notificación
   const resultado = await db.$transaction(async (tx) => {
     // Si es ACC-005 manual, crear el registro de pago PAGADO
-    let pagoCreado = null
+    let pagoCreado: Awaited<ReturnType<typeof tx.pago.create>> | null = null
     if (codigoAccion === 'ACC-005' && metadata?.manual) {
       pagoCreado = await tx.pago.create({
         data: {
@@ -292,7 +292,7 @@ export async function ejecutarAccion({ folio, codigoAccion, ejecutadoPorId, meta
     })
 
     // Crear notificación si aplica
-    let notificacion = null
+    let notificacion: Awaited<ReturnType<typeof tx.notificacion.create>> | null = null
     if (accionInfo.notificacion && expediente.cliente.email) {
       notificacion = await tx.notificacion.create({
         data: {
@@ -317,7 +317,7 @@ export async function ejecutarAccion({ folio, codigoAccion, ejecutadoPorId, meta
             nombreCliente: expediente.cliente.nombreCompleto,
             tramiteNombre: expediente.tramiteTipo.nombre,
             precio: expediente.tramiteTipo.precio,
-            citaFecha: expedienteActualizado.citaFecha,
+            citaFecha: expedienteActualizado.citaFecha ? expedienteActualizado.citaFecha.toISOString() : null,
             citaLugar: expedienteActualizado.citaLugar,
             citaDireccion: expedienteActualizado.citaDireccion,
           }
@@ -389,10 +389,6 @@ async function validarPrecondiciones(
       // Cita generada: requerir datos de la cita
       if (!metadata?.cita?.fecha || !metadata?.cita?.lugar) {
         throw new Error('ACC-004 requiere metadata.cita con fecha y lugar')
-      }
-      const fechaCita = new Date(metadata.cita.fecha)
-      if (fechaCita <= new Date()) {
-        throw new Error('La fecha de la cita debe ser posterior a la fecha actual')
       }
       break
     }

@@ -15,8 +15,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ folio: string }> }
 ) {
+  let folio = ''
   try {
-    const { folio } = await params
+    folio = (await params).folio
 
     // Verificar sesión
     const session = await getServerSession(authOptions)
@@ -80,11 +81,9 @@ export async function GET(
           id: d.id,
           tipo: d.tipo,
           fileName: d.fileName,
-          filePath: d.filePath,
           fileSize: d.fileSize,
           valido: d.valido,
           notaValidacion: d.notaValidacion,
-          subidoPorCliente: d.subidoPorCliente,
           createdAt: d.createdAt,
         })),
         pagos: expediente.pagos,

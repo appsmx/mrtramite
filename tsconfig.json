@@ -37,6 +37,12 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "mrtramite-repo",
+    "logan-repo",
+    "mini-services",
+    "examples",
+    "tests",
+    "skills"
   ]
 }

@@ -12,7 +12,7 @@ import { logger } from '@/lib/logger'
 //   - TRAMITE_FINALIZADO (disparada por ACC-006)
 
 const resend = process.env.RESEND_API_KEY
-  ? new Resend.Resend(process.env.RESEND_API_KEY)
+  ? new Resend(process.env.RESEND_API_KEY)
   : null
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { ejecutarAccion, getOrCreateSystemUser } from '@/lib/services/expediente-service'
 import { verificarPago, validarFirmaWebhook, mapearEstadoPago } from '@/lib/services/mercado-pago-service'
@@ -76,7 +77,8 @@ export async function POST(request: NextRequest) {
     })
 
     // 5. Buscar el pago en nuestra DB (usamos external_reference que es nuestro pagoId)
-    let pago = null
+    type PagoConExpediente = Prisma.PagoGetPayload<{ include: { expediente: true } }>
+    let pago: PagoConExpediente | null = null
     if (pagoMP.externalReference) {
       pago = await db.pago.findUnique({
         where: { id: pagoMP.externalReference },
