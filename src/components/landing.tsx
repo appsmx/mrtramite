@@ -555,8 +555,42 @@ export function Landing({ onStartTramite }: LandingProps) {
 
           <Separator className="my-6 bg-background/20" />
 
-          <div className="flex flex-col items-center justify-between gap-3 text-xs text-background/60 sm:flex-row">
+          <div className="flex flex-col items-center justify-between gap-4 text-xs text-background/60 sm:flex-row">
             <p>© 2026 Mr. Trámite. Todos los derechos reservados.</p>
+
+            {/* Sello LOGAN */}
+            <a
+              id="logan-seal"
+              href="https://logancorp.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Sitio creado con la metodología LOGAN"
+              aria-label="Sello LOGAN — Creado con la metodología LOGAN"
+              className="group relative inline-flex items-center gap-2.5 rounded-full border border-background/15 bg-background/5 px-3.5 py-2 transition-all duration-300 hover:bg-background/10 hover:border-amber-400/40 hover:shadow-[0_0_20px_-2px_rgba(251,191,36,0.4)]"
+            >
+              {/* Avatar con gradiente ámbar */}
+              <span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 font-black text-foreground text-sm shadow-inner">
+                L
+                {/* Anillo exterior que se ilumina al hover */}
+                <span className="absolute inset-0 rounded-full border border-amber-300/40 opacity-50 transition-opacity group-hover:opacity-100" />
+                {/* Brillo giratorio al hover */}
+                <span className="absolute inset-[-3px] rounded-full bg-gradient-to-tr from-amber-400 via-transparent to-amber-300 opacity-0 blur-md transition-opacity duration-500 group-hover:opacity-60" />
+              </span>
+
+              {/* Texto */}
+              <span className="flex flex-col leading-none">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-200/90">
+                  Creado con
+                </span>
+                <span className="text-sm font-bold text-background">LOGAN</span>
+              </span>
+
+              {/* Punto verde "metodología activa" con pulse */}
+              <span className="relative hidden sm:inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400 ml-0.5" title="Metodología activa">
+                <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+              </span>
+            </a>
+
             <p>Hecho en México 🇲🇽</p>
           </div>
         </div>
