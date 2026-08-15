@@ -106,10 +106,9 @@ document.getElementById('btn').onclick = async function() {
       "- Ser conciso: respuestas de 2-4 parrafos maximo."
     ].join("\n");
 
-    const res = await fetch('https://logancorp.vercel.app/api/projects/cmsmfx4670000jr04lzzy1znm/update-vision', {
+    const res = await fetch('/api/admin/update-bot-vision', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: 'logan-update-2026', vision: vision })
+      headers: { 'Content-Type': 'application/json' }
     });
     const data = await res.json();
     el.textContent = JSON.stringify(data, null, 2);
