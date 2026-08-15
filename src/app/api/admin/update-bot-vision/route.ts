@@ -1,17 +1,12 @@
 // Endpoint temporal para actualizar la visión del bot en la DB de LOGAN OS.
 // POST /api/admin/update-bot-vision
-// Usa Neon serverless HTTP API directamente (sin driver, solo fetch).
 // Se elimina después de usarse.
 
 import { NextResponse } from 'next/server'
 
 const PROJECT_ID = 'cmsmfx4670000jr04lzzy1znm'
-
-// Neon connection info (from the pooler connection string)
+const NEON_CONN_STRING = 'postgresql://neondb_owner:npg_tTpqg54HYBZm@ep-small-morning-avu016o1-pooler.c-11.us-east-1.aws.neon.tech/neondb?sslmode=require'
 const NEON_HOST = 'ep-small-morning-avu016o1-pooler.c-11.us-east-1.aws.neon.tech'
-const NEON_USER = 'neondb_owner'
-const NEON_PASS = 'npg_tTpqg54HYBZm'
-const NEON_DB = 'neondb'
 
 const VISION = `Mr. Tramite es una gestoria profesional de tramites en Mexico. Nuestro modelo: el cliente NO paga hasta tener su cita confirmada. Atendemos por web (mrtramite.mx), WhatsApp (526642342946) y Messenger.
 
@@ -106,82 +101,47 @@ TONO Y PERSONALIDAD DEL BOT:
 - NUNCA inventar informacion que no este aqui.
 - Ser conciso: respuestas de 2-4 parrafos maximo.`
 
+async function neonQuery(query: string, params: string[]) {
+  const res = await fetch(`https://${NEON_HOST}/sql`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Neon-Connection-String': NEON_CONN_STRING,
+    },
+    body: JSON.stringify({ query, params }),
+  })
+  const text = await res.text()
+  return { ok: res.ok, status: res.status, data: text }
+}
+
 export async function POST() {
   try {
-    // Use Neon's serverless HTTP query API
-    // Format: https://[project-host]/sql with basic auth
-    const authHeader = 'Basic ' + Buffer.from(`${NEON_USER}:${NEON_PASS}`).toString('base64')
+    // Step 1: List tables to find the correct name
+    const tables = await neonQuery(
+      "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename",
+      []
+    )
 
-    // First, let's try to list tables to find the correct name
-    const listTablesRes = await fetch(`https://${NEON_HOST}/sql`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader,
-        'Neon-Database': NEON_DB,
-        'Neon-Pool-Opt-In': 'true',
-      },
-      body: JSON.stringify({
-        query: "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename",
-        params: [],
-      }),
-    })
-
-    if (!listTablesRes.ok) {
-      const errText = await listTablesRes.text()
-      return NextResponse.json({ error: 'Failed to list tables', status: listTablesRes.status, details: errText }, { status: 500 })
+    if (!tables.ok) {
+      return NextResponse.json({ error: 'Failed to list tables', details: tables.data }, { status: 500 })
     }
 
-    const tablesData = await listTablesRes.json()
+    // Step 2: Try update with "Project" (Prisma default for PostgreSQL)
+    const update = await neonQuery(
+      `UPDATE "Project" SET "vision" = $1, "updatedAt" = NOW() WHERE "id" = $2 RETURNING "name", LENGTH("vision") as vision_len`,
+      [VISION, PROJECT_ID]
+    )
 
-    // Now try the update with the correct table name
-    const updateRes = await fetch(`https://${NEON_HOST}/sql`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader,
-        'Neon-Database': NEON_DB,
-        'Neon-Pool-Opt-In': 'true',
-      },
-      body: JSON.stringify({
-        query: `UPDATE "Project" SET "vision" = $1, "updatedAt" = NOW() WHERE "id" = $2 RETURNING "name", LENGTH("vision") as vision_len`,
-        params: [VISION, PROJECT_ID],
-      }),
-    })
-
-    if (!updateRes.ok) {
-      const errText = await updateRes.text()
-      // If Project doesn't work, try lowercase
-      const update2Res = await fetch(`https://${NEON_HOST}/sql`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
-          'Neon-Database': NEON_DB,
-          'Neon-Pool-Opt-In': 'true',
-        },
-        body: JSON.stringify({
-          query: `UPDATE project SET vision = $1, "updatedAt" = NOW() WHERE id = $2 RETURNING name, LENGTH(vision) as vision_len`,
-          params: [VISION, PROJECT_ID],
-        }),
-      })
-
-      if (!update2Res.ok) {
-        const err2Text = await update2Res.text()
-        return NextResponse.json({ 
-          error: 'Both queries failed', 
-          tables: tablesData,
-          attempt1: errText, 
-          attempt2: err2Text 
-        }, { status: 500 })
-      }
-
-      const data2 = await update2Res.json()
-      return NextResponse.json({ ok: true, result: data2, tables: tablesData })
+    if (update.ok) {
+      return NextResponse.json({ ok: true, result: JSON.parse(update.data), tables: JSON.parse(tables.data) })
     }
 
-    const data = await updateRes.json()
-    return NextResponse.json({ ok: true, result: data, tables: tablesData })
+    // Step 3: If "Project" failed, show what tables exist
+    return NextResponse.json({ 
+      error: 'Update failed - showing tables for debug', 
+      tables: JSON.parse(tables.data),
+      updateError: update.data
+    }, { status: 500 })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }
