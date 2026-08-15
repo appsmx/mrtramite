@@ -1,13 +1,12 @@
 {
-  "name": "mrtramite",
-  "version": "1.0.0",
+  "name": "nextjs_tailwind_shadcn_ts",
+  "version": "0.2.1",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "next build",
-    "start": "next start",
+    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
+    "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
-    "postinstall": "prisma generate",
     "db:push": "prisma db push --accept-data-loss",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -52,7 +51,6 @@
     "@tanstack/react-table": "^8.21.3",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
-    "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
@@ -80,6 +78,7 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
+    "z-ai-web-dev-sdk": "^0.0.18",
     "zod": "^4.0.2",
     "zustand": "^5.0.6"
   },

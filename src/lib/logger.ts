@@ -31,8 +31,6 @@ const SENSITIVE_KEYS = [
   'curp',
   'email',
   'telefono',
-  'nombre',
-  'nombreCompleto',
   'phone',
   'mercadoPagoId',
   'creditCard',

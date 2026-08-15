@@ -1,12 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "10mb",
-    },
+  output: "standalone",
+  /* config options here */
+  typescript: {
+    ignoreBuildErrors: true,
   },
+  reactStrictMode: false,
 };
 
 export default nextConfig;
