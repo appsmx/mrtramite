@@ -5,8 +5,8 @@
 import { NextResponse } from 'next/server'
 
 const PROJECT_ID = 'cmsmfx4670000jr04lzzy1znm'
-const NEON_CONN_STRING = 'postgresql://neondb_owner:npg_tTpqg54HYBZm@ep-small-morning-avu016o1-pooler.c-11.us-east-1.aws.neon.tech/neondb?sslmode=require'
-const NEON_HOST = 'ep-small-morning-avu016o1-pooler.c-11.us-east-1.aws.neon.tech'
+const NEON_CONN_STRING = 'postgresql://neondb_owner:npg_we92mXpZqszI@ep-dark-cloud-av50uwot-pooler.c-11.us-east-1.aws.neon.tech/neondb?sslmode=require'
+const NEON_HOST = 'ep-dark-cloud-av50uwot-pooler.c-11.us-east-1.aws.neon.tech'
 
 const VISION = `Mr. Tramite es una gestoria profesional de tramites en Mexico. Nuestro modelo: el cliente NO paga hasta tener su cita confirmada. Atendemos por web (mrtramite.mx), WhatsApp (526642342946) y Messenger.
 
