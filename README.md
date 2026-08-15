@@ -2,7 +2,8 @@
 
 Repositorio oficial de documentación del producto Mr. Trámite — gestoría profesional de trámites.
 
-> **Nota:** Este repo contiene **solo documentación**. El código fuente vive en el proyecto Next.js del entorno de desarrollo. Cualquier IA o developer que quiera entender el sistema debe leer los documentos de este repo; para ver el código, consultar el proyecto activo.
+> **URL producción:** https://mrtramite.mx
+> **Nota:** Este repo contiene documentación + código fuente. Cualquier IA o developer que quiera entender el sistema debe leer los documentos de este repo.
 
 ## Documentos
 
@@ -76,4 +77,4 @@ Cambios activos en este deploy:
 Variables de entorno requeridas en Vercel:
 - MERCADO_PAGO_ACCESS_TOKEN (pagos)
 - MERCADO_PAGO_WEBHOOK_SECRET (validar firma webhook)
-- NEXTAUTH_URL (https://mrtramite.vercel.app)
+- NEXTAUTH_URL (https://mrtramite.mx)

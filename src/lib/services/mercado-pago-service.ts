@@ -7,7 +7,7 @@
 // Variables de entorno requeridas:
 //   MERCADO_PAGO_ACCESS_TOKEN — token de acceso (producción o sandbox)
 //   MERCADO_PAGO_WEBHOOK_SECRET — (opcional) secreto compartido para validar firma
-//   NEXTAUTH_URL — URL base del sitio (ej: https://mrtramite.vercel.app)
+//   NEXTAUTH_URL — URL base del sitio (ej: https://mrtramite.mx)
 //
 // Documentación:
 //   https://www.mercadopago.com.mx/developers/es/docs/checkout-api/integration-configuration/integrate-with-pix

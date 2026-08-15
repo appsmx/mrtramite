@@ -28,9 +28,15 @@ export const metadata: Metadata = {
     "INE",
     "licencia de conducir",
     "cita consular",
+    "trámites México",
+    "gestoría profesional",
   ],
   authors: [{ name: "Mr. Trámite" }],
   manifest: "/manifest.json",
+  metadataBase: new URL("https://mrtramite.mx"),
+  alternates: {
+    canonical: "https://mrtramite.mx",
+  },
   icons: {
     icon: "/logo_icon.png",
     apple: "/logo_icon.png",
@@ -40,6 +46,7 @@ export const metadata: Metadata = {
     description:
       "No pagas hasta tener tu cita confirmada. Visa, pasaporte, INE y más.",
     siteName: "Mr. Trámite",
+    url: "https://mrtramite.mx",
     type: "website",
     locale: "es_MX",
   },

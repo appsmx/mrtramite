@@ -2,72 +2,72 @@
 
 Proyecto: Mr. Trámite
 Metodología: LOGAN v1.0
-Estado: `[estado:construcción]` — MVP en producción + Botpress configurado
-Avance: Sistema completo en Vercel, Botpress conectado a WhatsApp Business API
+Estado: `[estado:construcción]` — MVP en producción + dominio propio configurado
+Avance: Sistema completo, dominio mrtramite.mx adquirido en Cloudflare
 
 ## Objetivo completado en esta sesión
 
-Construcción, despliegue y configuración completa del MVP de Mr. Trámite. El sistema está en vivo en https://mrtramite.vercel.app con base de datos Neon PostgreSQL, Cloudinary para documentos, alertas Telegram, y bot de WhatsApp conectado vía Botpress.
+Adquisición del dominio `mrtramite.mx` en Cloudflare + configuración de Email Routing + actualización del código para usar el dominio propio.
 
 ## Sistema en producción
 
 | Componente | Estado | URL / Servicio |
 |---|---|---|
-| Sitio web | ✅ Funcionando | https://mrtramite.vercel.app |
+| Sitio web | ✅ Funcionando | https://mrtramite.mx |
+| Dominio | ✅ mrtramite.mx en Cloudflare | DNS + Email Routing |
 | Base de datos | ✅ Neon PostgreSQL | Connection string en .env |
 | Cloudinary | ✅ Configurado | Cloud name: nvjxzuy1 |
 | Telegram | ✅ Bot activo | @mr_tramite_bot, Chat ID: 1572031936 |
-| Botpress | ✅ Conectado a WhatsApp | OAuth Connection, Phone Number ID: 1300688526450924 |
-| WhatsApp negocio | ✅ 6642342946 | Configurado en Meta for Developers |
+| Email | ✅ contacto@mrtramite.mx | Cloudflare Email Routing → mrtramitemx@gmail.com |
 | GitHub repo | ✅ appsmx/mrtramite | Documentación + código fuente |
 | LOGAN repo | ✅ appsmx/logan | Metodología (público) |
+| Chat widget | ✅ LOGAN OS | logancorp.vercel.app/api/assistant/chat |
 
 ## Credenciales
 
-- **Admin:** mrtramitemx@gmail.com / tramitE1.
+- **Admin:** mrtramitemx@gmail.com / (cambiar desde Ajustes)
 - **WhatsApp negocio:** 6642342946
-- **Banco:** HSBC, Julian Rangel Quiñonez, Cuenta 6620535019, CLABE 021028066205350194
+- **Email corporativo:** contacto@mrtramite.mx → reenvía a mrtramitemx@gmail.com
+- **Dominio:** mrtramite.mx (Cloudflare, registrado 2026-08-15)
 
-## Configuración de Botpress
+## Decisiones activas (DEC-001 a DEC-021)
 
-- Bot creado en Botpress Cloud
-- Knowledge Base configurado con información de Mr. Trámite
-- Flujo de conversación manual (no AutonomousNode):
-  - Bienvenida → Capturar nombre → Teléfono → Email → CURP → Confirmar → Execute Code (axios POST al webhook) → Mensaje final con folio
-- Webhook endpoint: https://mrtramite.vercel.app/api/webhook-botpress
-- Integración WhatsApp: OAuth Connection activa
-- Meta for Developers: App "Mr. Trámite" con WhatsApp Business API
-- Phone Number ID: 1300688526450924
-- WABA ID: 2240282463392422
+Las 21 decisiones documentadas en Biblia_MrTramite.md v0.8 están reflejadas en código y producción.
 
 ## Pendientes
 
-1. **Publicar el bot en Botpress** — hacer click en "Publish"
-2. **Verificar número de prueba de Meta** — probar enviando WhatsApp
-3. **Verificación de negocio en Meta** — necesaria para producción sin restricciones (1-3 días)
-4. **Dominio personalizado** — comprar .mx o .com y conectar a Vercel
-5. **Emails reales con Resend** — actualmente simulados
-6. **Mercado Pago real** — actualmente transferencia manual
+1. **Conectar dominio en Vercel** — agregar mrtramite.mx en Project Settings → Domains
+2. **Actualizar NEXTAUTH_URL en Vercel** — cambiar a https://mrtramite.mx
+3. **Mercado Pago real** — configurar MERCADO_PAGO_ACCESS_TOKEN cuando lleguen credenciales
+4. **Verificación de negocio en Meta** — para WhatsApp sin restricciones
+5. **Emails reales con Resend** — configurar RESEND_API_KEY + verificar dominio en Resend
+6. **Google Workspace** — cuando se necesite inbox corporativo completo (fase 2)
 
 ## Documentos actualizados
 
-- `Biblia_MrTramite.md` v0.8 — 17 decisiones, MVP completo
+- `Biblia_MrTramite.md` v0.8 — 21 decisiones, MVP completo
 - `DS-160_campos.md` v1.1 — catálogo de campos
 - `schema/schema.prisma` — PostgreSQL (Neon)
 - `SESSION_CONTEXT.md` — este documento
-- `README.md` — documentación-only repo
+- `README.md` — URL producción: https://mrtramite.mx
 
-## Riesgos identificados
+## Próximo objetivo
 
-- **Password de admin:** `tramitE1.` es desarrollo. Cambiar antes de marketing.
-- **Access Token de Meta:** temporal (24h). Necesita token permanente.
-- **Número de prueba de Meta:** solo permite mensajes a números registrados como testers.
-- **LOGAN repo público:** cualquiera puede leerlo. Considerar hacerlo privado.
+1. Configurar DNS de Cloudflare → Vercel (A record + CNAME)
+2. Agregar dominio en Vercel dashboard
+3. Cuando lleguen credenciales de MP → integrar pagos reales
+4. Verificar dominio en Resend para emails desde @mrtramite.mx
 
 ## Observaciones
 
-- El código fuente vive en el repo appsmx/mrtramite (no solo documentación)
+- El código fuente vive en el repo appsmx/mrtramite
 - Vercel redeploy automático con cada push a GitHub
-- Variables de entorno en Vercel: DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL, CLOUDINARY_*, TELEGRAM_*
-- El footer de la landing dice "Powered by LOGAN" con link al repo
-- El número de WhatsApp cambió de personal a negocio: 6642342946
+- Variables de entorno en Vercel: DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL, CLOUDINARY_*, TELEGRAM_*, MERCADO_PAGO_*
+- Email Routing de Cloudflare es gratuito y suficiente para el MVP
+- Para enviar emails "como" contacto@mrtramite.mx desde Gmail, configurar SMTP relay (paso posterior)
+
+---
+*Generado por: PCS (LOGAN §10)*
+*Fecha: 2026-08-15*
+*Versión: v1.2 — Dominio propio adquirido*
+*URL: https://mrtramite.mx*
