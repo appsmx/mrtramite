@@ -73,7 +73,7 @@ Incluye: agendamiento de cita + asesoria de requisitos.
 
 DOCUMENTOS NECESARIOS:
 1. CURP certificada
-2. Acta de nacimiento CERTIFICADA (no copia simple, debe ser certificada ante el registro civil)
+2. Acta de nacimiento CERTIFICADA (no copia simple, debe ser certificada. Se obtiene en el Registro Civil de tu localidad o en linea en www.gob.mx/actas)
 3. Identificacion oficial vigente (INE o licencia)
 
 Cuando el cliente pregunte por los requisitos del pasaporte, SIEMPRE incluir este link de imagen al final de tu respuesta:
