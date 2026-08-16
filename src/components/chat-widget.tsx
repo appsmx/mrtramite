@@ -414,8 +414,32 @@ export function ChatWidget() {
 }
 
 // ---------------------------------------------------------------------------
-// Bubble de mensaje
+// Bubble de mensaje + renderizado de imágenes inline
 // ---------------------------------------------------------------------------
+
+const IMAGE_URL_REGEX = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp))/gi
+
+function renderContentWithImages(content: string) {
+  const regex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp))/gi
+  const parts = content.split(regex)
+  if (parts.length === 1) return content
+
+  return parts.map((part, i) => {
+    if (/https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp)/i.test(part)) {
+      return (
+        <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="block my-2">
+          <img
+            src={part}
+            alt="Requisitos Mr. Trámite"
+            className="rounded-lg border border-zinc-200 dark:border-zinc-700 max-w-full w-full"
+            loading="lazy"
+          />
+        </a>
+      )
+    }
+    return part ? <span key={i}>{part}</span> : null
+  })
+}
 
 function MensajeBubble({ mensaje }: { mensaje: Mensaje }) {
   const esUsuario = mensaje.role === 'user'
@@ -434,7 +458,10 @@ function MensajeBubble({ mensaje }: { mensaje: Mensaje }) {
     )
   }
 
-  // Mensaje del bot
+  // Mensaje del bot — detectar imágenes en el contenido
+  const hasImage = IMAGE_URL_REGEX.test(mensaje.content)
+  IMAGE_URL_REGEX.lastIndex = 0
+
   return (
     <div className="flex items-start gap-2">
       <div
@@ -450,7 +477,7 @@ function MensajeBubble({ mensaje }: { mensaje: Mensaje }) {
             : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 border-zinc-100 dark:border-zinc-700'
         }`}
       >
-        {mensaje.content}
+        {hasImage ? renderContentWithImages(mensaje.content) : mensaje.content}
         {esError && (
           <a
             href={WHATSAPP_URL}

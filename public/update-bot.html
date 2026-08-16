@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head><title>Actualizar Bot</title></head>
+<body style="font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;">
+<h1>Actualizar Vision del Bot</h1>
+<p>Click en el boton para actualizar el contexto del asistente con requisitos + imagenes + acta certificada.</p>
+<button id="btn" style="padding:12px 24px;font-size:16px;background:#1B4F72;color:white;border:none;border-radius:6px;cursor:pointer;">Actualizar Vision</button>
+<pre id="result" style="margin-top:20px;padding:12px;background:#f4f4f4;border-radius:4px;white-space:pre-wrap;word-wrap:break-word;"></pre>
+<script>
+document.getElementById('btn').onclick = async function() {
+  const el = document.getElementById('result');
+  el.textContent = 'Enviando...';
+  el.style.background = '#f4f4f4';
+  try {
+    const res = await fetch('/api/admin/update-bot-vision', { method: 'POST' });
+    const data = await res.json();
+    el.textContent = JSON.stringify(data, null, 2);
+    if (data.ok) {
+      el.style.background = '#d4edda';
+      el.textContent += '\n\n✅ Listo! El bot ahora sabe los requisitos y comparte imagenes.';
+    } else {
+      el.style.background = '#f8d7da';
+    }
+  } catch(e) {
+    el.textContent = 'Error: ' + e.message;
+    el.style.background = '#f8d7da';
+  }
+};
+</script>
+</body>
+</html>
